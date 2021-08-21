@@ -1,5 +1,5 @@
 # mitmproxy-elasticagent
-A mitmproxy's addon for dumping json response to Elasticsearch
+A [mitmproxy](https://mitmproxy.org/)'s addon for dumping json response to Elasticsearch
 
 ## Usage
 

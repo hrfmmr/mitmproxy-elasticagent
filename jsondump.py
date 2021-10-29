@@ -4,6 +4,7 @@ import json
 import traceback
 from threading import Thread
 from typing import Optional, Any, Dict, List, Union
+from urllib.parse import urlparse
 
 import aiohttp
 from mitmproxy import ctx
@@ -54,6 +55,9 @@ class ElasticAgentAddon:
         """
         if flow.request.host not in self.hosts:
             return
+        path = urlparse(flow.request.path).path
+        query = json.dumps({k: v for k, v in flow.request.query.fields})
+        self.content_encoding = None
         for k, v in flow.response.headers.items():
             if k.lower() == "content-encoding":
                 self.content_encoding = v
@@ -61,6 +65,8 @@ class ElasticAgentAddon:
         state = flow.get_state()
         del state["client_conn"]
         del state["server_conn"]
+        state["request"]["query"] = query
+        state["request"]["path"] = path
         for tfm in self.transformations:
             for field in tfm["fields"]:
                 self.transform_field(state, field, tfm["func"])
@@ -72,13 +78,11 @@ class ElasticAgentAddon:
             content: Optional[bytes],
         ) -> Union[Optional[bytes], Any]:
             if self.content_encoding:
-                content = Decoding.decode(content, self.content_encoding)
-            try:
-                obj = json.loads(content)
-            except json.decoder.JSONDecodeError:
-                return content
-            else:
-                return obj
+                try:
+                    content = Decoding.decode(content, self.content_encoding)
+                except gzip.BadGzipFile:
+                    ctx.log.info(f"map_content::content was not gzip!!!🙄")
+            return content
 
         self.transformations = [
             {
@@ -119,7 +123,7 @@ class ElasticAgentAddon:
         elif isinstance(obj, list) or isinstance(obj, tuple):
             return [cls.convert_to_strings(element) for element in obj]
         elif isinstance(obj, bytes):
-            return str(obj)[2:-1]
+            return obj.decode("utf-8")
         return obj
 
 

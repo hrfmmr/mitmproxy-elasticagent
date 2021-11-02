@@ -1,0 +1,11 @@
+{
+  "request": {
+    "method": "GET",
+    "query": "{\"platform\": \"ios\"}",
+    "content": ""
+  },
+  "response": {
+    "status_code": 200,
+    "content": "{\"sections\":[\"announcement\",\"todays_recipe\",\"ai_recommended_menus\",\"meal_reports\",\"dietary_concern_themes\",\"recipe_suggestions\"]}"
+  }
+}

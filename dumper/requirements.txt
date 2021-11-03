@@ -1,3 +1,12 @@
+attrs==21.2.0
 certifi==2021.10.8
 elasticsearch==7.15.1
+iniconfig==1.1.1
+packaging==21.2
+pluggy==1.0.0
+py==1.10.0
+pyparsing==2.4.7
+pytest==6.2.5
+PyYAML==6.0
+toml==0.10.2
 urllib3==1.26.7

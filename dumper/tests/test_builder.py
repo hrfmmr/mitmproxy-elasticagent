@@ -18,7 +18,10 @@ class TestBuilder:
         _source = load_params("tests/fixtures/_sources/v1_home_layout.json")
         pprint(_source)
         builder = OASBuilder(
-            pathlib.Path(tmpdir) / "_index.yml", endpoint_path, _source
+            #  pathlib.Path(tmpdir) / "_index.yml", endpoint_path, _source
+            pathlib.Path(".tmp"),
+            endpoint_path,
+            _source,
         )
         oas_resp_content = builder.build_response_content()
         pprint(oas_resp_content.build())

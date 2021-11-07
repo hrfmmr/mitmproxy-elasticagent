@@ -1,7 +1,14 @@
+import logging
 import pathlib
 from pprint import pprint
 
-from writer import OASResponseContentWriter
+from writer import (
+    OASResponseContentWriter,
+    OASResponsePatternWriter,
+    OASEndpointMethodWriter,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class TestOASResponseContentWriter:
@@ -20,10 +27,29 @@ class TestOASResponseContentWriter:
                 "content": '{"sections":["announcement","todays_recipe","ai_recommended_menus","meal_reports","dietary_concern_themes","recipe_suggestions"]}',
             }
         }
+        # debug
+        dest_root = pathlib.Path(".tmp")
+
+        if dest_root.exists():
+            from shutil import rmtree
+
+            rmtree(".tmp")
+        else:
+            dest_root.mkdir()
+        # debug
+
         dest_root = pathlib.Path(".tmp")
         writer = OASResponseContentWriter(
             dest_root, endpoint_path, "get", 200, content
         )
         writer.write()
-        pprint(list(dest_root.glob("**/*.yml")))
+        logger.info(list(dest_root.glob("**/*.yml")))
+
+        writer = OASResponsePatternWriter(dest_root, endpoint_path, "get")
+        writer.write()
+        logger.info(list(dest_root.glob("**/*.yml")))
+
+        writer = OASEndpointMethodWriter(dest_root, endpoint_path, "get")
+        writer.write()
+        logger.info(list(dest_root.glob("**/*.yml")))
         assert False

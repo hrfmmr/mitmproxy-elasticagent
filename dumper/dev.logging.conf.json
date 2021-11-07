@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "simple": {
+      "format": "[%(levelname)s](%(processName)s(%(process)s)-%(threadName)s) @%(asctime)s - %(name)s.%(filename)s#%(funcName)s():L%(lineno)s - %(message)s"
+    }
+  },
+  "handlers": {
+    "debug_stream_handler": {
+      "class": "logging.StreamHandler",
+      "level": "DEBUG",
+      "formatter": "simple",
+      "stream": "ext://sys.stdout"
+    },
+    "error_stream_handler": {
+      "class": "logging.StreamHandler",
+      "level": "ERROR",
+      "formatter": "simple",
+      "stream": "ext://sys.stderr"
+    }
+  },
+  "root": {
+    "level": "DEBUG",
+    "handlers": [
+      "debug_stream_handler",
+      "error_stream_handler"
+    ]
+  }
+}
+

@@ -1,8 +1,9 @@
+import json
 import logging
 import pathlib
 from pprint import pprint
 
-from writer import (
+from oasdumper.writer import (
     OASResponseContentWriter,
     OASResponsePatternWriter,
     OASEndpointMethodWriter,
@@ -12,7 +13,7 @@ from writer import (
 logger = logging.getLogger(__name__)
 
 
-class TestOASResponseContentWriter:
+class TestWriter:
     def test_write(self):
         """
         dest_root: pathlib.Path,
@@ -22,11 +23,16 @@ class TestOASResponseContentWriter:
         response_content: t.Dict[str, t.Any],
         """
         endpoint_path = "/v1/home/layout"
-        content = {
+        info = {
+            "request": {
+                "method": "GET",
+                "query": '{"platform": "ios"}',
+                "content": "",
+            },
             "response": {
                 "status_code": 200,
                 "content": '{"sections":["announcement","todays_recipe","ai_recommended_menus","meal_reports","dietary_concern_themes","recipe_suggestions"]}',
-            }
+            },
         }
         # debug
         dest_root = pathlib.Path(".tmp")
@@ -41,7 +47,7 @@ class TestOASResponseContentWriter:
 
         dest_root = pathlib.Path(".tmp")
         writer = OASResponseContentWriter(
-            dest_root, endpoint_path, "get", 200, content
+            dest_root, endpoint_path, "get", 200, info["response"]
         )
         writer.write()
         logger.info(list(dest_root.glob("**/*.yml")))
@@ -50,10 +56,17 @@ class TestOASResponseContentWriter:
         writer.write()
         logger.info(list(dest_root.glob("**/*.yml")))
 
-        writer = OASEndpointMethodWriter(dest_root, endpoint_path, "get")
+        writer = OASEndpointMethodWriter(
+            dest_root,
+            endpoint_path,
+            "get",
+            query=json.loads(info["request"]["query"]),
+        )
         writer.write()
         logger.info(list(dest_root.glob("**/*.yml")))
 
         writer = OASEndpointMethodPatternWriter(dest_root, endpoint_path)
         writer.write()
-        assert False
+        logger.info(list(dest_root.glob("**/*.yml")))
+
+        assert False, "💚"

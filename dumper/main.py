@@ -1,26 +1,15 @@
 import json
+import logging
 import pathlib
 import re
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, field
 from collections import defaultdict
-from pprint import pprint
 from urllib.parse import urlparse, parse_qs
 import typing as t
 
 from elasticsearch import Elasticsearch
 
-from models import (
-    HTTPMethod,
-    OASEndpointList,
-    OASEndpoint,
-    OASPathMethodList,
-    OASPathMethod,
-    OASResponseList,
-    OASResponse,
-    OASResponseContent,
-)
-from constants import BUILD_DEST_DIR
-from utils import endpoint_dir, response_description
+from oasdumper.logging import setup_logger
 
 REGEX_PATH_PARAM = re.compile(r"\b(?P<id>[0-9]+)")
 REGEX_VERSIONED_ENDPOINT_PATH = re.compile(r"(?P<version>^v[\d]+)")
@@ -28,9 +17,7 @@ PATH_PARAM_ID = "{id}"
 
 ELASTICSEARCH_INDEX = "ios-kenko"
 
-
-def snake_to_camel(w: str):
-    return "".join(x.capitalize() or "_" for x in w.split("_"))
+logger = logging.getLogger(__name__)
 
 
 class OASPath:
@@ -65,10 +52,8 @@ class OASBase:
 
 
 def main():
+    setup_logger()
     es = Elasticsearch("http://localhost:9200")
-    #  pprint(es.info())
-    indices = es.cat.indices(index="*", h="index").splitlines()
-    #  pprint(indices)
 
     result = es.search(
         index=ELASTICSEARCH_INDEX,
@@ -82,16 +67,12 @@ def main():
         ],
     )
     path_query_map = defaultdict(list)
-    # request.pathでGROUP BY的に集約してdistinctなpathsを抽出する
     for bucket in result["aggregations"]["requestpaths"]["buckets"]:
         path = bucket["key"]
         parsed = urlparse(path)
         parameterized_path = REGEX_PATH_PARAM.sub(PATH_PARAM_ID, parsed.path)
         path_query_map[parameterized_path].append(parse_qs(parsed.query))
-    # pathをkeyに、[method,query,req_content,resp_content]の単位リクエスト情報のdictをリスト要素としてつっこむ箱(あとで、param長が最大になるようにmergeできるようにひとまず全リクエストをつっこんでいく)
-    #  endpoints = defaultdict(list)
     for path in list(path_query_map.keys()):
-        #  print(f"path:{path}")
         if path == "/v1/home/layout":
             result = es.search(
                 index=ELASTICSEARCH_INDEX,
@@ -106,36 +87,10 @@ def main():
             )
             if result["hits"] and result["hits"]["hits"]:
                 info = result["hits"]["hits"][0]["_source"]
-                #  pprint(info)
-                print(json.dumps(info, indent=2, ensure_ascii=False))
+                logger.debug(json.dumps(info, indent=2, ensure_ascii=False))
+                # TODO: write OAS yaml
             else:
-                print(f"cannot extract info from path:{path}")
-
-
-def build_endpoint(_source: t.Dict[str, t.Any]) -> OASEndpoint:
-    pass
-
-
-def build_response_content(
-    endpoint_path: str, _source: t.Dict[str, t.Any]
-) -> OASResponseContent:
-    # paths/pets/get/responses/200/_index.yml
-    method = HTTPMethod[_source["request"]["method"]]
-    status_code = _source["response"]["status_code"]
-    response_content = json.loads(_source["response"]["content"])
-    dest = (
-        endpoint_dir(endpoint_path)
-        / method.value
-        / "responses"
-        / str(status_code)
-        / "_index.yml"
-    )
-    description = response_description(status_code)
-    return OASResponseContent(
-        dest=pathlib.Path(BUILD_DEST_DIR) / dest,
-        description=description,
-        content=response_content,
-    )
+                logger.debug(f"cannot extract info from path:{path}")
 
 
 if __name__ == "__main__":

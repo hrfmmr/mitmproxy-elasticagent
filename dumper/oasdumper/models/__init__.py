@@ -253,5 +253,4 @@ class OASEndpointList:
         for endpoint in self.endpoint_list:
             endpoint.write()
         oas_yaml = self.build()
-        # TODO: あー、pathsも、本来paths: $ref: "paths/_indexyml"になってる必要あるな
         self.dest.write_text(oas_yaml)

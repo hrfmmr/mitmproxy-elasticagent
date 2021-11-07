@@ -1,7 +1,6 @@
 import json
 import logging
 import pathlib
-from pprint import pprint
 
 from oasdumper.writer import (
     OASResponseContentWriter,

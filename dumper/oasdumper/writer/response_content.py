@@ -1,9 +1,9 @@
 import pathlib
 import typing as t
 
-from oasdumper.models import (
-    OASResponseContent,
-)
+import yaml
+
+from oasdumper.parser import OASParser
 from oasdumper.utils import endpoint_dir, response_description
 from oasdumper.utils.decorators import ensure_dest_exists
 from oasdumper.types import YAML
@@ -48,14 +48,14 @@ class OASResponseContentWriter:
 
     @ensure_dest_exists
     def write(self):
-        oas_yaml = self._build_response_content()
+        oas_yaml = self._build()
         self.dest.write_text(oas_yaml)
 
-    def _build_response_content(self) -> YAML:
+    def _build(self) -> YAML:
         description = response_description(self.status_code)
-        model = OASResponseContent(
-            dest=self.dest,
-            description=description,
-            content=self.response_content,
-        )
-        return model.build()
+        schema = OASParser.parse(self.response_content)
+        oas_json = {
+            "description": description,
+            "content": {"application/json": {"schema": schema}},
+        }
+        return yaml.dump(oas_json)

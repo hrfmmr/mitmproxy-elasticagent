@@ -7,6 +7,7 @@ from oasdumper.writer import (
     OASResponsePatternWriter,
     OASEndpointMethodWriter,
     OASEndpointMethodPatternWriter,
+    OASEndpointPatternWriter,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,11 +50,11 @@ class TestWriter:
             dest_root, endpoint_path, "get", 200, info["response"]
         )
         writer.write()
-        logger.info(list(dest_root.glob("**/*.yml")))
+        #  logger.info(list(dest_root.glob("**/*.yml")))
 
         writer = OASResponsePatternWriter(dest_root, endpoint_path, "get")
         writer.write()
-        logger.info(list(dest_root.glob("**/*.yml")))
+        #  logger.info(list(dest_root.glob("**/*.yml")))
 
         writer = OASEndpointMethodWriter(
             dest_root,
@@ -62,10 +63,15 @@ class TestWriter:
             query=json.loads(info["request"]["query"]),
         )
         writer.write()
-        logger.info(list(dest_root.glob("**/*.yml")))
+        #  logger.info(list(dest_root.glob("**/*.yml")))
 
         writer = OASEndpointMethodPatternWriter(dest_root, endpoint_path)
         writer.write()
-        logger.info(list(dest_root.glob("**/*.yml")))
+        #  logger.info(list(dest_root.glob("**/*.yml")))
+
+        # TODO: test OASEndpointPatternWriter
+        writer = OASEndpointPatternWriter(dest_root)
+        yaml_str = writer._build()
+        logger.info(f"yaml:\n{yaml_str}")
 
         assert False, "💚"

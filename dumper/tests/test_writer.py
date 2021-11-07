@@ -6,6 +6,7 @@ from writer import (
     OASResponseContentWriter,
     OASResponsePatternWriter,
     OASEndpointMethodWriter,
+    OASEndpointMethodPatternWriter,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,4 +53,7 @@ class TestOASResponseContentWriter:
         writer = OASEndpointMethodWriter(dest_root, endpoint_path, "get")
         writer.write()
         logger.info(list(dest_root.glob("**/*.yml")))
+
+        writer = OASEndpointMethodPatternWriter(dest_root, endpoint_path)
+        writer.write()
         assert False

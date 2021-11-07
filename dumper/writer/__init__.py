@@ -8,6 +8,7 @@ from pprint import pprint
 import yaml
 
 from models import (
+    HTTPMethod,
     OASResponseContent,
 )
 
@@ -69,7 +70,6 @@ class OASResponseContentWriter:
     @ensure_dest_exists
     def write(self):
         oas_yaml = self._build_response_content()
-        logger.debug(f"🐛 oas_yaml:{oas_yaml}")
         self.dest.write_text(oas_yaml)
 
     def _build_response_content(self) -> YAML:
@@ -117,6 +117,8 @@ class OASResponsePatternWriter:
         oas_json = {}
         for p in paths:
             result = re.match(self.rex_status_code, str(p))
+            if not result:
+                continue
             status_code = result.group("status_code")
             oas_json[status_code] = {"$ref": f"{status_code}/_index.yml"}
 
@@ -184,4 +186,39 @@ class OASEndpointMethodPatternWriter:
       $ref: 'post/_index.yml'
     """
 
-    pass
+    def __init__(
+        self,
+        dest_root: pathlib.Path,
+        endpoint_path: str,
+    ) -> None:
+        self.dest_root = dest_root
+        self.endpoint_path = endpoint_path
+        self.dest = (
+            self.dest_root / endpoint_dir(self.endpoint_path) / "_index.yml"
+        )
+
+    @ensure_dest_exists
+    def write(self):
+        oas_yaml = self._build()
+        self.dest.write_text(oas_yaml)
+
+    def _build(self) -> YAML:
+        methods = self._find_endpoint_methods()
+        oas_json = {m: {"$ref": f"{m}/_index.yml"} for m in methods}
+        return yaml.dump(oas_json)
+
+    def _find_endpoint_methods(self) -> t.Set[str]:
+        rex = re.compile(
+            r".*/(?P<method>({methods}))/".format(
+                methods="|".join([e.value for e in HTTPMethod])
+            )
+            + r"responses/\d{3}/.*.ya?ml$"
+        )
+        paths = self.dest.parent.glob("**/*.yml")
+        methods: t.Set[str] = set()
+        for p in paths:
+            result = re.match(rex, str(p))
+            if not result:
+                continue
+            methods.add(result.group("method"))
+        return methods

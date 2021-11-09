@@ -53,11 +53,9 @@ class TestWriter:
             dest_root, endpoint_path, "get", 200, info["response"]
         )
         writer.write()
-        #  logger.info(list(dest_root.glob("**/*.yml")))
 
         writer = OASResponsePatternWriter(dest_root, endpoint_path, "get")
         writer.write()
-        #  logger.info(list(dest_root.glob("**/*.yml")))
 
         writer = OASEndpointMethodWriter(
             dest_root,
@@ -66,20 +64,16 @@ class TestWriter:
             query=json.loads(info["request"]["query"]),
         )
         writer.write()
-        #  logger.info(list(dest_root.glob("**/*.yml")))
 
         writer = OASEndpointMethodPatternWriter(dest_root, endpoint_path)
         writer.write()
-        #  logger.info(list(dest_root.glob("**/*.yml")))
 
         writer = OASEndpointPatternWriter(dest_root)
-        yaml_str = writer._build()
-        logger.info(f"yaml:\n{yaml_str}")
+        writer.write()
 
-        # TODO: OASIndexWriter's write
         paths = {
             endpoint_path: {
-                "$ref": str({endpoint_dir(endpoint_path) / "_index.yml"})
+                "$ref": str(endpoint_dir(endpoint_path) / "_index.yml")
             }
         }
         info = OASIndexInfo(
@@ -89,6 +83,6 @@ class TestWriter:
             paths=paths,
         )
         writer = OASIndexWriter(dest_root, info)
-        logger.info(f"yaml:\n{writer._build()}")
+        writer.write()
 
         assert False, "💚"

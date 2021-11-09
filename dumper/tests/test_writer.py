@@ -2,12 +2,15 @@ import json
 import logging
 import pathlib
 
+from oasdumper.models import OASIndexInfo, OASServer, OASSpecInfo
+from oasdumper.utils import endpoint_dir
 from oasdumper.writer import (
     OASResponseContentWriter,
     OASResponsePatternWriter,
     OASEndpointMethodWriter,
     OASEndpointMethodPatternWriter,
     OASEndpointPatternWriter,
+    OASIndexWriter,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,9 +72,23 @@ class TestWriter:
         writer.write()
         #  logger.info(list(dest_root.glob("**/*.yml")))
 
-        # TODO: test OASEndpointPatternWriter
         writer = OASEndpointPatternWriter(dest_root)
         yaml_str = writer._build()
         logger.info(f"yaml:\n{yaml_str}")
+
+        # TODO: OASIndexWriter's write
+        paths = {
+            endpoint_path: {
+                "$ref": str({endpoint_dir(endpoint_path) / "_index.yml"})
+            }
+        }
+        info = OASIndexInfo(
+            openapi="3.0.0",
+            info=OASSpecInfo(version="0.0.1", title="", description=""),
+            servers=[OASServer(url="https://example.com")],
+            paths=paths,
+        )
+        writer = OASIndexWriter(dest_root, info)
+        logger.info(f"yaml:\n{writer._build()}")
 
         assert False, "💚"

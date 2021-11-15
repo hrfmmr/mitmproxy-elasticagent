@@ -6,7 +6,8 @@ def endpoint_root_dir() -> pathlib.Path:
 
 
 def endpoint_dir(endpoint_path: str) -> pathlib.Path:
-    return endpoint_root_dir() / to_endpoint_dir(endpoint_path)
+    path = parameterized_endpoint_path(endpoint_path)
+    return endpoint_root_dir() / to_endpoint_dir(path)
 
 
 def to_endpoint_dir(endpoint_path: str) -> str:
@@ -15,6 +16,21 @@ def to_endpoint_dir(endpoint_path: str) -> str:
 
 def to_endpoint_path(dir_name: str) -> str:
     return "/" + dir_name.replace("_", "/")
+
+
+def parameterized_endpoint_path(endpoint_path: str) -> str:
+    """
+    eg.
+        in: /v1/posts/100/comments/2
+        out: /v1/posts/{post_id}/comments/{comment_id}
+    """
+    components = endpoint_path.split("/")
+    for i, c in enumerate(components):
+        if c.isdigit():
+            res = components[i - 1]
+            res_id_descriptor = "{" + f"{res[:-1]}_id" + "}"
+            components[i] = res_id_descriptor
+    return "/".join(components)
 
 
 def response_description(status_code: int) -> str:

@@ -5,6 +5,7 @@ import pathlib
 import pytest
 import yaml
 
+from oasdumper.models import HTTPMethod
 from oasdumper.writer import (
     OASEndpointMethodWriter,
 )
@@ -50,17 +51,57 @@ class TestOASEndpointMethodWriter:
                     "responses": {"$ref": "responses/_index.yml"},
                     "summary": "",
                 },
-            )
+            ),
+            (
+                dict(
+                    endpoint_path="/v1/posts",
+                    _source={
+                        "request": {
+                            "method": "POST",
+                            "query": "{}",
+                            "content": '{"title": "foo", "body": "bar", "userId": 1}',
+                        },
+                        "response": {
+                            "status_code": 200,
+                            "content": '{"id": 101, "title": "foo", "body": "bar", "userId": 1}',
+                        },
+                    },
+                ),
+                {
+                    "operationId": "postPosts",
+                    "requestBody": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "body": {"type": "string"},
+                                        "title": {"type": "string"},
+                                        "userId": {"type": "integer"},
+                                    },
+                                    "type": "object",
+                                }
+                            }
+                        }
+                    },
+                    "responses": {"$ref": "responses/_index.yml"},
+                    "summary": "",
+                },
+            ),
         ],
     )
     def test_write(self, input, expected, tmpdir):
         dest_root = pathlib.Path(tmpdir)
         logger.info(f"dest_root:{str(tmpdir)}")
+        request_content_raw = input["_source"]["request"]["content"]
+        request_content = (
+            json.loads(request_content_raw) if request_content_raw else None
+        )
         writer = OASEndpointMethodWriter(
             dest_root,
             input["endpoint_path"],
-            "get",
+            HTTPMethod[input["_source"]["request"]["method"]],
             query=json.loads(input["_source"]["request"]["query"]),
+            request_content=request_content,
         )
         writer.write()
         logger.debug(list(dest_root.glob("**/*")))

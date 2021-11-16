@@ -5,7 +5,7 @@ import typing as t
 
 import yaml
 
-from oasdumper.models import OASParameter, OASParameterSchema
+from oasdumper.models import HTTPMethod, OASParameter, OASParameterSchema
 from oasdumper.parser import OASParser
 from oasdumper.utils import endpoint_dir, parameterized_endpoint_path
 from oasdumper.utils.decorators import ensure_dest_exists
@@ -28,18 +28,20 @@ class OASEndpointMethodWriter:
         self,
         dest_root: pathlib.Path,
         endpoint_path: str,
-        method: str,
+        method: HTTPMethod,
         query: t.Optional[t.Dict[str, t.Any]] = None,
+        request_content: t.Optional[t.Dict[str, t.Any]] = None,
     ) -> None:
         self.dest_root = dest_root
         self.endpoint_path = endpoint_path
         self.method = method
         self.query = query
+        self.request_content = request_content
         #  TODO: fix 'v1_posts_1_comments'
         self.dest = (
             self.dest_root
             / endpoint_dir(self.endpoint_path)
-            / self.method
+            / self.method.value
             / "_index.yml"
         )
 
@@ -54,6 +56,14 @@ class OASEndpointMethodWriter:
             "operationId": self._build_operation_id(),
             "responses": {"$ref": "responses/_index.yml"},
         }
+        if self.request_content:
+            oas_json["requestBody"] = {
+                "content": {
+                    "application/json": {
+                        "schema": OASParser.parse(self.request_content)
+                    }
+                }
+            }
         params = []
         path_params = self._build_path_params()
         if path_params:
@@ -84,7 +94,6 @@ class OASEndpointMethodWriter:
                     for k, v in self.query.items()
                 ]
             )
-        # TODO: append body params if exists
         if params:
             oas_json["parameters"] = [p.build_oas_json() for p in params]
         return yaml.dump(oas_json)
@@ -111,7 +120,7 @@ class OASEndpointMethodWriter:
         path_without_version = result.group("path")
         path_params = self._build_path_params()
         operation_id = "".join(
-            [self.method]
+            [self.method.value]
             + [
                 s.capitalize()[:-1]
                 if [k for k in path_params if s[:-1] in k]

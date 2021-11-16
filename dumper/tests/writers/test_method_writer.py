@@ -32,25 +32,28 @@ class TestOASEndpointMethodWriter:
                         },
                     },
                 ),
-                {
-                    "operationId": "getPostComments",
-                    "parameters": [
-                        {
-                            "in": "path",
-                            "name": "post_id",
-                            "required": True,
-                            "schema": {"type": "integer"},
-                        },
-                        {
-                            "in": "query",
-                            "name": "id",
-                            "required": False,
-                            "schema": {"type": "string"},
-                        },
-                    ],
-                    "responses": {"$ref": "responses/_index.yml"},
-                    "summary": "",
-                },
+                dict(
+                    path="paths/v1_posts_{post_id}_comments/get/_index.yml",
+                    yaml={
+                        "operationId": "getPostComments",
+                        "parameters": [
+                            {
+                                "in": "path",
+                                "name": "post_id",
+                                "required": True,
+                                "schema": {"type": "integer"},
+                            },
+                            {
+                                "in": "query",
+                                "name": "id",
+                                "required": False,
+                                "schema": {"type": "string"},
+                            },
+                        ],
+                        "responses": {"$ref": "responses/_index.yml"},
+                        "summary": "",
+                    },
+                ),
             ),
             (
                 dict(
@@ -67,25 +70,28 @@ class TestOASEndpointMethodWriter:
                         },
                     },
                 ),
-                {
-                    "operationId": "postPosts",
-                    "requestBody": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "body": {"type": "string"},
-                                        "title": {"type": "string"},
-                                        "userId": {"type": "integer"},
-                                    },
-                                    "type": "object",
+                dict(
+                    path="paths/v1_posts/post/_index.yml",
+                    yaml={
+                        "operationId": "postPosts",
+                        "requestBody": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "properties": {
+                                            "body": {"type": "string"},
+                                            "title": {"type": "string"},
+                                            "userId": {"type": "integer"},
+                                        },
+                                        "type": "object",
+                                    }
                                 }
                             }
-                        }
+                        },
+                        "responses": {"$ref": "responses/_index.yml"},
+                        "summary": "",
                     },
-                    "responses": {"$ref": "responses/_index.yml"},
-                    "summary": "",
-                },
+                ),
             ),
         ],
     )
@@ -108,4 +114,5 @@ class TestOASEndpointMethodWriter:
         logger.debug(writer.dest.read_text())
         logger.debug(yaml.safe_load(writer.dest.read_text()))
 
-        assert yaml.safe_load(writer.dest.read_text()) == expected
+        assert str(writer.dest) == str(dest_root / expected["path"])
+        assert yaml.safe_load(writer.dest.read_text()) == expected["yaml"]

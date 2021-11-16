@@ -3,6 +3,7 @@ import typing as t
 
 import yaml
 
+from oasdumper.models import HTTPMethod
 from oasdumper.parser import OASParser
 from oasdumper.utils import endpoint_dir, response_description
 from oasdumper.utils.decorators import ensure_dest_exists
@@ -28,9 +29,9 @@ class OASResponseContentWriter:
         self,
         dest_root: pathlib.Path,
         endpoint_path: str,
-        method: str,
+        method: HTTPMethod,
         status_code: int,
-        response_content: t.Dict[str, t.Any],
+        response_content: t.Optional[t.Dict[str, t.Any]],
     ) -> None:
         self.dest_root = dest_root
         self.endpoint_path = endpoint_path
@@ -40,7 +41,7 @@ class OASResponseContentWriter:
         self.dest = (
             self.dest_root
             / endpoint_dir(self.endpoint_path)
-            / self.method
+            / self.method.value
             / "responses"
             / str(self.status_code)
             / "_index.yml"
@@ -53,9 +54,10 @@ class OASResponseContentWriter:
 
     def _build(self) -> YAML:
         description = response_description(self.status_code)
-        schema = OASParser.parse(self.response_content)
         oas_json = {
             "description": description,
-            "content": {"application/json": {"schema": schema}},
         }
+        if self.response_content:
+            schema = OASParser.parse(self.response_content)
+            oas_json["content"] = {"application/json": {"schema": schema}}
         return yaml.dump(oas_json)

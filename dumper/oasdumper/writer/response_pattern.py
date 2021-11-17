@@ -3,6 +3,7 @@ import re
 
 import yaml
 
+from oasdumper.models import HTTPMethod
 from oasdumper.utils import endpoint_dir
 from oasdumper.utils.decorators import ensure_dest_exists
 from oasdumper.types import YAML
@@ -18,7 +19,7 @@ class OASResponsePatternWriter:
         self,
         dest_root: pathlib.Path,
         endpoint_path: str,
-        method: str,
+        method: HTTPMethod,
     ) -> None:
         self.dest_root = dest_root
         self.endpoint_path = endpoint_path
@@ -27,7 +28,7 @@ class OASResponsePatternWriter:
         self.dest = (
             self.dest_root
             / endpoint_dir(self.endpoint_path)
-            / self.method
+            / self.method.value
             / "responses"
             / "_index.yml"
         )

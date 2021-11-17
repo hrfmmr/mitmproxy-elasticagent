@@ -29,8 +29,8 @@ class OASEndpointPatternWriter:
         self.dest = self.dest_root / endpoint_root_dir() / "_index.yml"
 
     def write(self):
-        # TODO: ⚓ from HERE!!!
-        pass
+        oas_yaml = self._build()
+        self.dest.write_text(oas_yaml)
 
     def _build(self) -> YAML:
         oas_json = {

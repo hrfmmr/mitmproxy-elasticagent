@@ -1,6 +1,7 @@
 import json
 import logging
 import pathlib
+import pprint
 
 import pytest
 import yaml
@@ -96,7 +97,7 @@ class TestOASResponseContentWriter:
             response_content,
         )
         writer.write()
-        logger.debug(list(dest_root.glob("**/*")))
+        logger.debug(pprint.pformat(list(dest_root.glob("**/*")), indent=2))
         logger.debug(writer.dest.read_text())
         logger.debug(yaml.safe_load(writer.dest.read_text()))
         assert str(writer.dest) == str(dest_root / expected["path"])

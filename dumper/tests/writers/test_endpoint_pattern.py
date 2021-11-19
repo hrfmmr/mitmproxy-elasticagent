@@ -23,12 +23,15 @@ class TestOASEndpointPatternWriter:
         ("endpoints", "expected"),
         [
             (
-                ("/v1/posts", "/v1/albums"),
+                ("/v1/posts", "/v1/albums", "/v1/posts/1/comments/2"),
                 dict(
                     path="paths/_index.yml",
                     yaml={
                         "/v1/albums": {"$ref": "v1_albums/_index.yml"},
                         "/v1/posts": {"$ref": "v1_posts/_index.yml"},
+                        "/v1/posts/{post_id}/comments/{comment_id}": {
+                            "$ref": "v1_posts_{post_id}_comments_{comment_id}/_index.yml"
+                        },
                     },
                 ),
             )
@@ -44,7 +47,7 @@ class TestOASEndpointPatternWriter:
         writer = OASEndpointPatternWriter(dest_root)
         writer.write()
         logger.debug(pprint.pformat(list(dest_root.glob("**/*")), indent=2))
-        logger.debug(writer.dest.read_text())
+        logger.debug(f"📜yaml:\n{writer.dest.read_text()}")
         logger.debug(yaml.safe_load(writer.dest.read_text()))
 
         assert str(writer.dest) == str(dest_root / expected["path"])

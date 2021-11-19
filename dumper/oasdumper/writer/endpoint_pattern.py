@@ -41,7 +41,7 @@ class OASEndpointPatternWriter:
 
     def _find_endpoint_paths(self) -> t.Iterator[str]:
         paths = self.dest.parent.glob("*")
-        rex_endpoint_dir = re.compile(r".*/paths/(?P<endpoint_dir>[\w]+)")
+        rex_endpoint_dir = re.compile(r".*/paths/(?P<endpoint_dir>[\w{}]+)")
         for p in paths:
             if p.is_file():
                 continue

@@ -37,7 +37,6 @@ class OASEndpointMethodWriter:
         self.method = method
         self.query = query
         self.request_content = request_content
-        #  TODO: fix 'v1_posts_1_comments'
         self.dest = (
             self.dest_root
             / endpoint_dir(self.endpoint_path)

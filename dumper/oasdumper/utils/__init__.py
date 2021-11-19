@@ -1,3 +1,4 @@
+import re
 import pathlib
 
 
@@ -15,7 +16,20 @@ def to_endpoint_dir(endpoint_path: str) -> str:
 
 
 def to_endpoint_path(dir_name: str) -> str:
-    return "/" + dir_name.replace("_", "/")
+    p = r"{[\w]+}"
+    path_params = re.findall(p, dir_name)
+    if path_params:
+        mask = "XXX"
+        masked = re.sub(p, mask, dir_name)
+        param_it = iter((range(len(path_params))))
+        return "/" + "/".join(
+            [
+                s if s != mask else path_params[next(param_it)]
+                for s in masked.split("_")
+            ]
+        )
+    else:
+        return "/" + dir_name.replace("_", "/")
 
 
 def parameterized_endpoint_path(endpoint_path: str) -> str:

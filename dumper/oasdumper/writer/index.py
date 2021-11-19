@@ -1,10 +1,12 @@
 import pathlib
+import typing as t
 from dataclasses import asdict
 
 import yaml
 
-from oasdumper.models import OASIndexInfo
+from oasdumper.models import OASIndexInfo, OASSpecInfo, OASServer
 from oasdumper.types import YAML
+from oasdumper.utils import endpoint_root_dir
 
 
 class OASIndexWriter:
@@ -23,9 +25,22 @@ class OASIndexWriter:
         $ref: "paths/pets/_index.yml"
     """
 
-    def __init__(self, dest_root: pathlib.Path, info: OASIndexInfo) -> None:
+    def __init__(
+        self,
+        dest_root: pathlib.Path,
+        openapi_version: str,
+        version: str,
+        title: str,
+        description: str,
+        server_urls: t.List[str],
+    ) -> None:
         self.dest_root = dest_root
-        self.info = info
+        self.info = OASIndexInfo(
+            openapi=openapi_version,
+            info=OASSpecInfo(version, title, description),
+            servers=[OASServer(url) for url in server_urls],
+            paths={"$ref": str(endpoint_root_dir() / "_index.yml")},
+        )
         self.dest = self.dest_root / "index.yml"
 
     def write(self):

@@ -4,11 +4,11 @@
   "description": "Multi-file boilerplate for Open API Specification.",
   "main": "index.js",
   "scripts": {
-    "build": "swagger-cli bundle src/index.yml --outfile .build/pets_store.yml --type yaml",
-    "lint": "npm run build && spectral lint .build/pets_store.yml",
-    "preview": "npm run build && redoc-cli serve .build/pets_store.yml --options.onlyRequiredInSamples",
-    "html": "npm run build && redoc-cli bundle .build/pets_store.yml  --output .build/index.html --options.onlyRequiredInSamples",
-    "clean": "rm -r .build"
+    "build": "swagger-cli bundle .tmp/index.yml --outfile .bundle/oas.yml --type yaml",
+    "lint": "npm run build && spectral lint .bundle/oas.yml",
+    "preview": "npm run build && redoc-cli serve .bundle/oas.yml --options.onlyRequiredInSamples",
+    "html": "npm run build && redoc-cli bundle .bundle/oas.yml  --output .bundle/index.html --options.onlyRequiredInSamples",
+    "clean": "rm -r .bundle"
   },
   "license": "MIT",
   "dependencies": {

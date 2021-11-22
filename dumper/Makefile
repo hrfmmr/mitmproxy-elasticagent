@@ -13,3 +13,7 @@ run:
 .PHONY: test
 test:
 	.venv/bin/pytest
+
+.PHONY: preview
+preview:
+	open --new -a "Google Chrome" --args --new-window $(PWD)/.bundle/index.html

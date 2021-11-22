@@ -34,7 +34,7 @@ class TestOASResponseContentWriter:
                     },
                 ),
                 dict(
-                    path="paths/v1_posts_{post_id}_comments/get/responses/200/_index.yml",
+                    path="paths/v1-posts-{post_id}-comments/get/responses/200/_index.yml",
                     yaml={
                         "content": {
                             "application/json": {
@@ -70,7 +70,7 @@ class TestOASResponseContentWriter:
                     },
                 ),
                 dict(
-                    path="paths/v1_posts_{post_id}/get/responses/404/_index.yml",
+                    path="paths/v1-posts-{post_id}/get/responses/404/_index.yml",
                     yaml={
                         "description": "Error response",
                     },

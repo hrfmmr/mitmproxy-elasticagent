@@ -1,6 +1,8 @@
 import re
 import pathlib
 
+DELIMITER = "-"
+
 
 def endpoint_root_dir() -> pathlib.Path:
     return pathlib.Path("paths")
@@ -12,7 +14,7 @@ def endpoint_dir(endpoint_path: str) -> pathlib.Path:
 
 
 def to_endpoint_dir(endpoint_path: str) -> str:
-    return endpoint_path.replace("/", "_")[1:]
+    return endpoint_path.replace("/", DELIMITER)[1:]
 
 
 def to_endpoint_path(dir_name: str) -> str:
@@ -25,11 +27,11 @@ def to_endpoint_path(dir_name: str) -> str:
         return "/" + "/".join(
             [
                 s if s != mask else path_params[next(param_it)]
-                for s in masked.split("_")
+                for s in masked.split(DELIMITER)
             ]
         )
     else:
-        return "/" + dir_name.replace("_", "/")
+        return "/" + dir_name.replace(DELIMITER, "/")
 
 
 def parameterized_endpoint_path(endpoint_path: str) -> str:

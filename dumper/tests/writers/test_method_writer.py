@@ -33,7 +33,7 @@ class TestOASEndpointMethodWriter:
                     },
                 ),
                 dict(
-                    path="paths/v1_posts_{post_id}_comments/get/_index.yml",
+                    path="paths/v1-posts-{post_id}-comments/get/_index.yml",
                     yaml={
                         "operationId": "getPostComments",
                         "parameters": [
@@ -71,9 +71,47 @@ class TestOASEndpointMethodWriter:
                     },
                 ),
                 dict(
-                    path="paths/v1_posts/post/_index.yml",
+                    path="paths/v1-posts/post/_index.yml",
                     yaml={
                         "operationId": "postPosts",
+                        "requestBody": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "properties": {
+                                            "body": {"type": "string"},
+                                            "title": {"type": "string"},
+                                            "userId": {"type": "integer"},
+                                        },
+                                        "type": "object",
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {"$ref": "responses/_index.yml"},
+                        "summary": "",
+                    },
+                ),
+            ),
+            (
+                dict(
+                    endpoint_path="/v1/foo_bar_baz",
+                    _source={
+                        "request": {
+                            "method": "POST",
+                            "query": "{}",
+                            "content": '{"title": "foo", "body": "bar", "userId": 1}',
+                        },
+                        "response": {
+                            "status_code": 200,
+                            "content": '{"id": 101, "title": "foo", "body": "bar", "userId": 1}',
+                        },
+                    },
+                ),
+                dict(
+                    path="paths/v1-foo_bar_baz/post/_index.yml",
+                    yaml={
+                        "operationId": "postFooBarBaz",
                         "requestBody": {
                             "content": {
                                 "application/json": {

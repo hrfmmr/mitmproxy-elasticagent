@@ -13,6 +13,8 @@ from oasdumper.types import YAML
 
 logger = logging.getLogger(__name__)
 
+RES_DELIMITER = "_"
+
 
 class OASEndpointMethodWriter:
     """
@@ -128,4 +130,9 @@ class OASEndpointMethodWriter:
                 if not s.isdigit()
             ]
         )
-        return operation_id
+        if RES_DELIMITER not in operation_id:
+            return operation_id
+        components = operation_id.split(RES_DELIMITER)
+        return components[0] + "".join(
+            [x.capitalize() for x in components[1:]]
+        )

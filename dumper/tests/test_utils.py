@@ -2,6 +2,7 @@ import pytest
 
 from oasdumper.utils import (
     parameterized_endpoint_path,
+    to_endpoint_dir,
     to_endpoint_path,
 )
 
@@ -9,9 +10,20 @@ from oasdumper.utils import (
 @pytest.mark.parametrize(
     ("input", "expected"),
     [
-        ("v1_posts", "/v1/posts"),
+        ("/v1/posts", "v1-posts"),
+        ("/v1/ai_recommended_menus", "v1-ai_recommended_menus"),
+    ],
+)
+def test_to_endpoint_dir(input, expected):
+    assert to_endpoint_dir(input) == expected
+
+
+@pytest.mark.parametrize(
+    ("input", "expected"),
+    [
+        ("v1-posts", "/v1/posts"),
         (
-            "v1_posts_{post_id}_comments_{comment_id}",
+            "v1-posts-{post_id}-comments-{comment_id}",
             "/v1/posts/{post_id}/comments/{comment_id}",
         ),
     ],

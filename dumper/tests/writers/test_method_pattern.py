@@ -38,7 +38,7 @@ class TestOASEndpointMethodPatternWriter:
                 ("GET", "POST"),
                 "/v1/posts",
                 dict(
-                    path="paths/v1_posts/_index.yml",
+                    path="paths/v1-posts/_index.yml",
                     yaml={
                         "get": {"$ref": "get/_index.yml"},
                         "post": {"$ref": "post/_index.yml"},

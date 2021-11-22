@@ -48,7 +48,7 @@ class TestOASResponsePatternWriter:
                     },
                 ),
                 dict(
-                    path="paths/v1_posts_{post_id}_comments/get/responses/_index.yml",
+                    path="paths/v1-posts-{post_id}-comments/get/responses/_index.yml",
                     yaml={"200": {"$ref": "200/_index.yml"}},
                 ),
             )

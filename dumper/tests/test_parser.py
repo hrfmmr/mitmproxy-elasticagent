@@ -27,10 +27,6 @@ class TestOASParser:
                             "type": "object",
                             "properties": {
                                 "id": {"type": "integer"},
-                                "posts": {
-                                    "type": "array",
-                                    "items": "object",
-                                },
                             },
                         }
                     },

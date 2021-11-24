@@ -27,11 +27,10 @@ class OASParser:
                 d["properties"][k] = c
             return d
         elif type(json_data) is list:
+            if not json_data:
+                return None
             d["type"] = "array"
-            if len(json_data) != 0:
-                d["items"] = OASParser.parse(json_data[0])
-            else:
-                d["items"] = "object"
+            d["items"] = OASParser.parse(json_data[0])
             return d
         else:
             t = OASParser.gettype(type(json_data).__name__)

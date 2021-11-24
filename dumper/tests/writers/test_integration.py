@@ -67,14 +67,14 @@ class TestIntegratedWriters:
                     paths=[
                         "index.yml",
                         "paths/_index.yml",
-                        "paths/v1_posts/_index.yml",
-                        "paths/v1_posts/post/_index.yml",
-                        "paths/v1_posts/post/responses/_index.yml",
-                        "paths/v1_posts/post/responses/200/_index.yml",
-                        "paths/v1_posts_{post_id}_comments/_index.yml",
-                        "paths/v1_posts_{post_id}_comments/get/_index.yml",
-                        "paths/v1_posts_{post_id}_comments/get/responses/_index.yml",
-                        "paths/v1_posts_{post_id}_comments/get/responses/200/_index.yml",
+                        "paths/v1-posts-{post_id}-comments/_index.yml",
+                        "paths/v1-posts-{post_id}-comments/get/_index.yml",
+                        "paths/v1-posts-{post_id}-comments/get/responses/_index.yml",
+                        "paths/v1-posts-{post_id}-comments/get/responses/200/_index.yml",
+                        "paths/v1-posts/_index.yml",
+                        "paths/v1-posts/post/_index.yml",
+                        "paths/v1-posts/post/responses/_index.yml",
+                        "paths/v1-posts/post/responses/200/_index.yml",
                     ],
                     yaml={
                         "info": {

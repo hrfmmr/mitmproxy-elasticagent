@@ -1,7 +1,11 @@
 import re
 import pathlib
+import typing as t
+
+from oasdumper.models import HTTPMethod
 
 DELIMITER = "-"
+RES_DELIMITER = "_"
 
 
 def endpoint_root_dir() -> pathlib.Path:
@@ -34,6 +38,13 @@ def to_endpoint_path(dir_name: str) -> str:
         return "/" + dir_name.replace(DELIMITER, "/")
 
 
+def response_description(status_code: int) -> str:
+    if status_code >= 200 and status_code < 300:
+        return "Expected response to a valid request"
+    else:
+        return "Error response"
+
+
 def parameterized_endpoint_path(endpoint_path: str) -> str:
     """
     eg.
@@ -49,8 +60,44 @@ def parameterized_endpoint_path(endpoint_path: str) -> str:
     return "/".join(components)
 
 
-def response_description(status_code: int) -> str:
-    if status_code >= 200 and status_code < 300:
-        return "Expected response to a valid request"
-    else:
-        return "Error response"
+def build_path_params(endpoint_path: str) -> t.Dict[str, t.Any]:
+    """
+    eg.
+        in: /v1/posts/100/comments/2
+        out: {'post_id': 100, 'comment_id': 2}
+    """
+    path_params = {}
+    parameterized_path = parameterized_endpoint_path(endpoint_path)
+    rex_path_param = re.compile(r"^{(?P<res_id>.*_?id)}$")
+    orig_components = endpoint_path.split("/")
+    for i, c in enumerate(parameterized_path.split("/")):
+        result = rex_path_param.match(c)
+        if result:
+            path_params[result.group("res_id")] = int(orig_components[i])
+    return path_params
+
+
+def build_operation_id(method: HTTPMethod, endpoint_path: str) -> str:
+    """
+    eg.
+        in: ('get', '/v1/posts/1/comments')
+        out: 'getPostComments'
+    """
+    rex = re.compile(r"^/v[\d]+/(?P<path>.+)")
+    result = re.match(rex, endpoint_path)
+    path_without_version = result.group("path")
+    path_params = build_path_params(endpoint_path)
+    operation_id = "".join(
+        [method.value]
+        + [
+            s.capitalize()[:-1]
+            if [k for k in path_params if s[:-1] in k]
+            else s.capitalize()
+            for s in path_without_version.split("/")
+            if not s.isdigit()
+        ]
+    )
+    if RES_DELIMITER not in operation_id:
+        return operation_id
+    components = operation_id.split(RES_DELIMITER)
+    return components[0] + "".join([x.capitalize() for x in components[1:]])

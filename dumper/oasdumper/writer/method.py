@@ -1,13 +1,16 @@
 import logging
 import pathlib
-import re
 import typing as t
 
 import yaml
 
 from oasdumper.models import HTTPMethod, OASParameter, OASParameterSchema
 from oasdumper.parser import OASParser
-from oasdumper.utils import endpoint_dir, parameterized_endpoint_path
+from oasdumper.utils import (
+    endpoint_dir,
+    build_path_params,
+    build_operation_id,
+)
 from oasdumper.utils.decorators import ensure_dest_exists
 from oasdumper.types import YAML
 
@@ -54,7 +57,7 @@ class OASEndpointMethodWriter:
     def _build(self) -> YAML:
         oas_json = {
             "summary": "",
-            "operationId": self._build_operation_id(),
+            "operationId": build_operation_id(self.method, self.endpoint_path),
             "responses": {"$ref": "responses/_index.yml"},
         }
         if self.request_content:
@@ -66,7 +69,7 @@ class OASEndpointMethodWriter:
                 }
             }
         params = []
-        path_params = self._build_path_params()
+        path_params = build_path_params(self.endpoint_path)
         if path_params:
             params.extend(
                 [
@@ -98,41 +101,3 @@ class OASEndpointMethodWriter:
         if params:
             oas_json["parameters"] = [p.build_oas_json() for p in params]
         return yaml.dump(oas_json)
-
-    def _build_path_params(self) -> t.Dict[str, t.Any]:
-        path_params = {}
-        parameterized_path = parameterized_endpoint_path(self.endpoint_path)
-        rex_path_param = re.compile(r"^{(?P<res_id>.*_?id)}$")
-        orig_components = self.endpoint_path.split("/")
-        for i, c in enumerate(parameterized_path.split("/")):
-            result = rex_path_param.match(c)
-            if result:
-                path_params[result.group("res_id")] = int(orig_components[i])
-        return path_params
-
-    def _build_operation_id(self) -> str:
-        """
-        eg.
-            in: ('get', '/v1/posts/1/comments')
-            out: 'getPostComments'
-        """
-        rex = re.compile(r"^/v[\d]+/(?P<path>.+)")
-        result = re.match(rex, self.endpoint_path)
-        path_without_version = result.group("path")
-        path_params = self._build_path_params()
-        operation_id = "".join(
-            [self.method.value]
-            + [
-                s.capitalize()[:-1]
-                if [k for k in path_params if s[:-1] in k]
-                else s.capitalize()
-                for s in path_without_version.split("/")
-                if not s.isdigit()
-            ]
-        )
-        if RES_DELIMITER not in operation_id:
-            return operation_id
-        components = operation_id.split(RES_DELIMITER)
-        return components[0] + "".join(
-            [x.capitalize() for x in components[1:]]
-        )

@@ -4,7 +4,6 @@ import typing as t
 import yaml
 
 from oasdumper.models import HTTPMethod, SchemaType
-from oasdumper.parser import OASParser
 from oasdumper.utils import (
     endpoint_dir,
     response_description,

@@ -42,4 +42,5 @@ class OASResponseSchemaWriter:
 
     def _build(self) -> YAML:
         schema = OASParser.parse(self.response_content)
+        schema["required"] = sorted(list(self.response_content.keys()))
         return yaml.dump(schema)

@@ -14,7 +14,7 @@ from oasdumper.writer import (
 logger = logging.getLogger(__name__)
 
 
-class TestOASResponseContentWriter:
+class TestOASResponseSchemaWriter:
     @pytest.mark.parametrize(
         ("input", "expected"),
         [
@@ -43,6 +43,9 @@ class TestOASResponseContentWriter:
                             "name": {"type": "string"},
                             "postId": {"type": "integer"},
                         },
+                        "required": sorted(
+                            ["postId", "id", "name", "email", "body"]
+                        ),
                         "type": "object",
                     },
                 ),

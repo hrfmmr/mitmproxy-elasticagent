@@ -6,6 +6,12 @@ from dataclasses import dataclass, asdict
 logger = logging.getLogger(__name__)
 
 
+class SchemaType(Enum):
+    REQUEST_PARAMS = "RequestParams"
+    REQUEST_BODY = "RequestBody"
+    RESPONSE_BODY = "Response"
+
+
 class HTTPMethod(Enum):
     GET = "get"
     POST = "post"

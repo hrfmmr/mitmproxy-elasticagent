@@ -2,7 +2,7 @@ import re
 import pathlib
 import typing as t
 
-from oasdumper.models import HTTPMethod
+from oasdumper.models import HTTPMethod, SchemaType
 
 DELIMITER = "-"
 RES_DELIMITER = "_"
@@ -12,9 +12,18 @@ def endpoint_root_dir() -> pathlib.Path:
     return pathlib.Path("paths")
 
 
+def schema_root_dir() -> pathlib.Path:
+    return pathlib.Path("components/schemas")
+
+
 def endpoint_dir(endpoint_path: str) -> pathlib.Path:
     path = parameterized_endpoint_path(endpoint_path)
     return endpoint_root_dir() / to_endpoint_dir(path)
+
+
+def endpoint_schema_dir(endpoint_path: str) -> pathlib.Path:
+    path = parameterized_endpoint_path(endpoint_path)
+    return schema_root_dir() / to_endpoint_dir(path)
 
 
 def to_endpoint_dir(endpoint_path: str) -> str:
@@ -101,3 +110,10 @@ def build_operation_id(method: HTTPMethod, endpoint_path: str) -> str:
         return operation_id
     components = operation_id.split(RES_DELIMITER)
     return components[0] + "".join([x.capitalize() for x in components[1:]])
+
+
+def build_schema_identifier(
+    method: HTTPMethod, endpoint_path: str, schema_type: SchemaType
+) -> str:
+    opid = build_operation_id(method, endpoint_path)
+    return opid[0].upper() + opid[1:] + schema_type.value

@@ -1,3 +1,4 @@
+from .response_schema import OASResponseSchemaWriter
 from .response_content import OASResponseContentWriter
 from .response_pattern import OASResponsePatternWriter
 from .method import OASEndpointMethodWriter

@@ -8,7 +8,7 @@ import yaml
 
 from oasdumper.models import HTTPMethod
 from oasdumper.writer import (
-    OASResponseContentWriter,
+    OASResponseSchemaWriter,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,41 +34,19 @@ class TestOASResponseContentWriter:
                     },
                 ),
                 dict(
-                    path="paths/v1-posts-{post_id}-comments/get/responses/200/_index.yml",
+                    path="components/schemas/v1-posts-{post_id}-comments/get/responses/200/_index.yml",
                     yaml={
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GetPostCommentsResponse"
-                                }
-                            }
+                        "properties": {
+                            "body": {"type": "string"},
+                            "email": {"type": "string"},
+                            "id": {"type": "integer"},
+                            "name": {"type": "string"},
+                            "postId": {"type": "integer"},
                         },
-                        "description": "Expected response to a valid request",
+                        "type": "object",
                     },
                 ),
-            ),
-            (
-                dict(
-                    endpoint_path="/v1/posts/999",
-                    _source={
-                        "request": {
-                            "method": "GET",
-                            "query": "{}",
-                            "content": "",
-                        },
-                        "response": {
-                            "status_code": 404,
-                            "content": "",
-                        },
-                    },
-                ),
-                dict(
-                    path="paths/v1-posts-{post_id}/get/responses/404/_index.yml",
-                    yaml={
-                        "description": "Error response",
-                    },
-                ),
-            ),
+            )
         ],
     )
     def test_write(self, input, expected, tmpdir):
@@ -82,7 +60,7 @@ class TestOASResponseContentWriter:
             )
         except json.decoder.JSONDecodeError:
             response_content = None
-        writer = OASResponseContentWriter(
+        writer = OASResponseSchemaWriter(
             dest_root,
             input["endpoint_path"],
             HTTPMethod[input["_source"]["request"]["method"]],

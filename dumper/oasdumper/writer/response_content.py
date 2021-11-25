@@ -3,9 +3,13 @@ import typing as t
 
 import yaml
 
-from oasdumper.models import HTTPMethod
+from oasdumper.models import HTTPMethod, SchemaType
 from oasdumper.parser import OASParser
-from oasdumper.utils import endpoint_dir, response_description
+from oasdumper.utils import (
+    endpoint_dir,
+    response_description,
+    build_schema_identifier,
+)
 from oasdumper.utils.decorators import ensure_dest_exists
 from oasdumper.types import YAML
 
@@ -58,6 +62,12 @@ class OASResponseContentWriter:
             "description": description,
         }
         if self.response_content:
-            schema = OASParser.parse(self.response_content)
-            oas_json["content"] = {"application/json": {"schema": schema}}
+            schema_id = build_schema_identifier(
+                self.method, self.endpoint_path, SchemaType.RESPONSE_BODY
+            )
+            oas_json["content"] = {
+                "application/json": {
+                    "schema": {"$ref": f"#/components/schemas/{schema_id}"}
+                }
+            }
         return yaml.dump(oas_json)

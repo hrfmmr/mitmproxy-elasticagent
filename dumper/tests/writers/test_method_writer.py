@@ -45,9 +45,11 @@ class TestOASEndpointMethodWriter:
                             },
                             {
                                 "in": "query",
-                                "name": "id",
+                                "name": "GetPostCommentsRequestParams",
                                 "required": False,
-                                "schema": {"type": "string"},
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetPostCommentsRequestParams"
+                                },
                             },
                         ],
                         "responses": {"$ref": "responses/_index.yml"},

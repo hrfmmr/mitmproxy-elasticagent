@@ -4,12 +4,18 @@ import typing as t
 
 import yaml
 
-from oasdumper.models import HTTPMethod, OASParameter, OASParameterSchema
+from oasdumper.models import (
+    HTTPMethod,
+    OASParameter,
+    OASParameterSchema,
+    SchemaType,
+)
 from oasdumper.parser import OASParser
 from oasdumper.utils import (
     endpoint_dir,
     build_path_params,
     build_operation_id,
+    build_schema_identifier,
 )
 from oasdumper.utils.decorators import ensure_dest_exists
 from oasdumper.types import YAML
@@ -71,33 +77,30 @@ class OASEndpointMethodWriter:
         params = []
         path_params = build_path_params(self.endpoint_path)
         if path_params:
-            params.extend(
-                [
-                    OASParameter(
-                        _in="path",
-                        name=k,
-                        required=True,
-                        schema=OASParameterSchema(
-                            type=OASParser.gettype(type(v).__name__)
-                        ),
-                    )
-                    for k, v in path_params.items()
-                ]
-            )
+            models = [
+                OASParameter(
+                    _in="path",
+                    name=k,
+                    required=True,
+                    schema=OASParameterSchema(
+                        type=OASParser.gettype(type(v).__name__)
+                    ),
+                )
+                for k, v in path_params.items()
+            ]
+            params.extend([p.build_oas_json() for p in models])
         if self.query:
-            params.extend(
-                [
-                    OASParameter(
-                        _in="query",
-                        name=k,
-                        required=False,
-                        schema=OASParameterSchema(
-                            type=OASParser.gettype(type(v).__name__)
-                        ),
-                    )
-                    for k, v in self.query.items()
-                ]
+            schema_id = build_schema_identifier(
+                self.method, self.endpoint_path, SchemaType.REQUEST_PARAMS
+            )
+            params.append(
+                {
+                    "in": "query",
+                    "name": schema_id,
+                    "required": False,
+                    "schema": {"$ref": f"#/components/schemas/{schema_id}"},
+                }
             )
         if params:
-            oas_json["parameters"] = [p.build_oas_json() for p in params]
+            oas_json["parameters"] = params
         return yaml.dump(oas_json)

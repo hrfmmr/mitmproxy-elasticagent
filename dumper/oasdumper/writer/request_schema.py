@@ -93,4 +93,5 @@ class OASRequestBodySchemaWriter:
 
     def _build(self) -> YAML:
         schema = OASParser.parse(self.request_content)
+        schema["required"] = sorted(list(self.request_content.keys()))
         return yaml.dump(schema)

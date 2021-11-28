@@ -87,6 +87,11 @@ class TestOASRequestBodySchemaWriter:
                             "title": {"type": "string"},
                             "userId": {"type": "integer"},
                         },
+                        "required": [
+                            "body",
+                            "title",
+                            "userId",
+                        ],
                         "type": "object",
                     },
                 ),

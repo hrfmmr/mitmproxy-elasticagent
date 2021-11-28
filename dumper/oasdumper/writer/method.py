@@ -67,10 +67,13 @@ class OASEndpointMethodWriter:
             "responses": {"$ref": "responses/_index.yml"},
         }
         if self.request_content:
+            schema_id = build_schema_identifier(
+                self.method, self.endpoint_path, SchemaType.REQUEST_BODY
+            )
             oas_json["requestBody"] = {
                 "content": {
                     "application/json": {
-                        "schema": OASParser.parse(self.request_content)
+                        "schema": {"$ref": f"#/components/schemas/{schema_id}"}
                     }
                 }
             }

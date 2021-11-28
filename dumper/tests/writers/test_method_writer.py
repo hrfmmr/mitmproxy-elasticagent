@@ -80,12 +80,7 @@ class TestOASEndpointMethodWriter:
                             "content": {
                                 "application/json": {
                                     "schema": {
-                                        "properties": {
-                                            "body": {"type": "string"},
-                                            "title": {"type": "string"},
-                                            "userId": {"type": "integer"},
-                                        },
-                                        "type": "object",
+                                        "$ref": "#/components/schemas/PostPostsRequestBody"
                                     }
                                 }
                             }
@@ -118,12 +113,7 @@ class TestOASEndpointMethodWriter:
                             "content": {
                                 "application/json": {
                                     "schema": {
-                                        "properties": {
-                                            "body": {"type": "string"},
-                                            "title": {"type": "string"},
-                                            "userId": {"type": "integer"},
-                                        },
-                                        "type": "object",
+                                        "$ref": "#/components/schemas/PostFooBarBazRequestBody"
                                     }
                                 }
                             }

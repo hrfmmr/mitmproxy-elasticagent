@@ -69,6 +69,14 @@ def parameterized_endpoint_path(endpoint_path: str) -> str:
     return "/".join(components)
 
 
+def is_parameterized(endpoint_path: str) -> bool:
+    rex_path_param = re.compile(r"^{(?P<res_id>.*_?id)}$")
+    for c in endpoint_path.split("/"):
+        if rex_path_param.match(c):
+            return True
+    return False
+
+
 def build_path_params(endpoint_path: str) -> t.Dict[str, t.Any]:
     """
     eg.
@@ -95,17 +103,24 @@ def build_operation_id(method: HTTPMethod, endpoint_path: str) -> str:
     rex = re.compile(r"^/v[\d]+/(?P<path>.+)")
     result = re.match(rex, endpoint_path)
     path_without_version = result.group("path")
-    path_params = build_path_params(endpoint_path)
-    operation_id = "".join(
-        [method.value]
-        + [
+    if is_parameterized(endpoint_path):
+        rex_path_param = re.compile(r"^{(?P<res_id>.*_?id)}$")
+        operation_res = [
+            s.capitalize()[:-1]
+            for s in path_without_version.split("/")
+            if not rex_path_param.match(s)
+        ]
+    else:
+        path_params = build_path_params(endpoint_path)
+        operation_res = [
             s.capitalize()[:-1]
             if [k for k in path_params if s[:-1] in k]
             else s.capitalize()
             for s in path_without_version.split("/")
             if not s.isdigit()
         ]
-    )
+    operation_id = method.value + "".join(operation_res)
+
     if RES_DELIMITER not in operation_id:
         return operation_id
     components = operation_id.split(RES_DELIMITER)

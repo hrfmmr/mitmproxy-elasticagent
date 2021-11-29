@@ -25,6 +25,7 @@ def test_to_endpoint_dir(input, expected):
     ("input", "expected"),
     [
         ("v1-posts", "/v1/posts"),
+        ("v1-posts-{post_id}-comments", "/v1/posts/{post_id}/comments"),
         (
             "v1-posts-{post_id}-comments-{comment_id}",
             "/v1/posts/{post_id}/comments/{comment_id}",
@@ -87,6 +88,14 @@ def test_build_operation_id(input, expected):
                 SchemaType.RESPONSE_BODY,
             ),
             "GetPostCommentResponse",
+        ),
+        (
+            (
+                HTTPMethod.POST,
+                "/v1/posts/{post_id}/comments",
+                SchemaType.REQUEST_BODY,
+            ),
+            "PostPostCommentRequestBody",
         ),
     ],
 )

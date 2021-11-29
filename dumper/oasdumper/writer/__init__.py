@@ -8,6 +8,7 @@ from .request_schema import (
 from .method import OASEndpointMethodWriter
 from .method_pattern import OASEndpointMethodPatternWriter
 from .endpoint_pattern import OASEndpointPatternWriter
+from .schema_index import OASSchemaIndexWriter
 from .index import OASIndexWriter
 
 # TODO: path params

@@ -69,37 +69,26 @@ class OASSchemaIndexWriter:
         self,
     ) -> t.Generator[t.Tuple[str, pathlib.Path], None, None]:
         paths = self.dest.parent.glob("**/*.yml")
-        for p in paths:
-            result = REX_REQUEST_PARAMS.match(str(p))
-            if result:
-                endpoint_dir = result.group("endpoint_dir")
-                method = result.group("method")
-                yield build_schema_identifier(
-                    HTTPMethod(method),
-                    to_endpoint_path(endpoint_dir),
+        for path in paths:
+            result = None
+            for rex, schema in zip(
+                (REX_REQUEST_PARAMS, REX_REQUEST_BODY, REX_RESPONSE_BODY),
+                (
                     SchemaType.REQUEST_PARAMS,
-                ), p
-                continue
-            result = REX_REQUEST_BODY.match(str(p))
-            if result:
-                endpoint_dir = result.group("endpoint_dir")
-                method = result.group("method")
-                yield build_schema_identifier(
-                    HTTPMethod(method),
-                    to_endpoint_path(endpoint_dir),
                     SchemaType.REQUEST_BODY,
-                ), p
-                continue
-            result = REX_RESPONSE_BODY.match(str(p))
-            if result:
-                endpoint_dir = result.group("endpoint_dir")
-                method = result.group("method")
-                yield build_schema_identifier(
-                    HTTPMethod(method),
-                    to_endpoint_path(endpoint_dir),
                     SchemaType.RESPONSE_BODY,
-                ), p
-                continue
+                ),
+            ):
+                result = rex.match(str(path))
+                if result:
+                    endpoint_dir = result.group("endpoint_dir")
+                    method = result.group("method")
+                    schema_id = build_schema_identifier(
+                        HTTPMethod(method),
+                        to_endpoint_path(endpoint_dir),
+                        SchemaType.RESPONSE_BODY,
+                    )
+                    yield schema_id, path
+                    break
             if not result:
-                logger.warning(f"🚨 unexpected schema path:{str(p)}")
-                continue
+                logger.warning(f"🚨 unexpected schema path:{str(path)}")

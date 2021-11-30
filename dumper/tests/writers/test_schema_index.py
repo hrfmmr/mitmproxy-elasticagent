@@ -30,10 +30,22 @@ class TestOASSchemaIndexWriter:
             (
                 [
                     "v1-posts-{post_id}-comments/get/request_params.yml",
+                    "v1-posts/post/request_body.yml",
+                    "v1-posts-{post_id}-photos/get/responses/200/_index.yml",
                 ],
                 dict(
-                    path="",
-                    yaml={},
+                    path="components/schemas/_index.yml",
+                    yaml={
+                        "GetPostCommentRequestParams": {
+                            "$ref": "v1-posts-{post_id}-comments/get/request_params.yml"
+                        },
+                        "GetPostPhotoResponse": {
+                            "$ref": "v1-posts-{post_id}-photos/get/responses/200/_index.yml"
+                        },
+                        "PostPostsRequestBody": {
+                            "$ref": "v1-posts/post/request_body.yml"
+                        },
+                    },
                 ),
             ),
         ],
@@ -43,13 +55,10 @@ class TestOASSchemaIndexWriter:
 
         for p in schema_paths:
             touch_child(dest_root, p)
-        writer = OASSchemaIndexWriter(dest_root)
 
-        # 🐛debug
-        writer._build()
-        # 🐛debug
+        writer = OASSchemaIndexWriter(dest_root)
+        writer.write()
 
         logger.debug(pprint.pformat(list(dest_root.glob("**/*")), indent=2))
         logger.debug(f"📜yaml:\n{writer.dest.read_text()}")
         logger.debug(yaml.safe_load(writer.dest.read_text()))
-        assert False, "💚"

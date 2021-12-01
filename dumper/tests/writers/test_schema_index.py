@@ -2,6 +2,7 @@ import json
 import logging
 import pathlib
 import pprint
+import typing as t
 
 import pytest
 import yaml
@@ -17,10 +18,25 @@ from oasdumper.writer import (
 logger = logging.getLogger(__name__)
 
 
-def touch_child(dest_root: pathlib.Path, schema_path: str):
+@pytest.fixture
+def dummy_content():
+    yield {
+        "properties": {
+            "name": {"type": "string"},
+        },
+        "required": sorted(["name"]),
+        "type": "object",
+    }
+
+
+def touch_child(
+    dest_root: pathlib.Path,
+    schema_path: str,
+    schema_content: t.Dict[str, t.Any],
+):
     path = dest_root / schema_root_dir() / schema_path
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.touch()
+    path.write_text(yaml.dump(schema_content))
 
 
 class TestOASSchemaIndexWriter:
@@ -36,25 +52,31 @@ class TestOASSchemaIndexWriter:
                 dict(
                     path="components/schemas/_index.yml",
                     yaml={
-                        "GetPostCommentRequestParams": {
-                            "$ref": "v1-posts-{post_id}-comments/get/request_params.yml"
+                        "GetPostCommentResponse": {
+                            "properties": {"name": {"type": "string"}},
+                            "required": ["name"],
+                            "type": "object",
                         },
                         "GetPostPhotoResponse": {
-                            "$ref": "v1-posts-{post_id}-photos/get/responses/200/_index.yml"
+                            "properties": {"name": {"type": "string"}},
+                            "required": ["name"],
+                            "type": "object",
                         },
-                        "PostPostsRequestBody": {
-                            "$ref": "v1-posts/post/request_body.yml"
+                        "PostPostsResponse": {
+                            "properties": {"name": {"type": "string"}},
+                            "required": ["name"],
+                            "type": "object",
                         },
                     },
                 ),
             ),
         ],
     )
-    def test_write(self, schema_paths, expected, tmpdir):
+    def test_write(self, schema_paths, expected, dummy_content, tmpdir):
         dest_root = pathlib.Path(tmpdir)
 
         for p in schema_paths:
-            touch_child(dest_root, p)
+            touch_child(dest_root, p, dummy_content)
 
         writer = OASSchemaIndexWriter(dest_root)
         writer.write()

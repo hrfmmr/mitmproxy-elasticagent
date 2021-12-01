@@ -61,8 +61,7 @@ class OASSchemaIndexWriter:
     def _build(self) -> YAML:
         oas_json = {}
         for schema_id, path in self._extract_schemas():
-            schema_path = path.relative_to(self.dest.parent)
-            oas_json[schema_id] = {"$ref": str(schema_path)}
+            oas_json[schema_id] = yaml.safe_load(path.read_text())
         return yaml.dump(oas_json)
 
     def _extract_schemas(

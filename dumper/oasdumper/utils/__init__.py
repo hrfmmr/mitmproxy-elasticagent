@@ -104,9 +104,12 @@ def build_operation_id(method: HTTPMethod, endpoint_path: str) -> str:
     result = re.match(rex, endpoint_path)
     path_without_version = result.group("path")
     if is_parameterized(endpoint_path):
-        rex_path_param = re.compile(r"^{(?P<res_id>.*_?id)}$")
+        rex_path_param = re.compile(r"{(?P<res_id>.*_?id)}")
+        path_params = rex_path_param.findall(endpoint_path)
         operation_res = [
             s.capitalize()[:-1]
+            if [k for k in path_params if s[:-1] in k]
+            else s.capitalize()
             for s in path_without_version.split("/")
             if not rex_path_param.match(s)
         ]

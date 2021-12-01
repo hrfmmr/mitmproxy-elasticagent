@@ -56,6 +56,10 @@ def test_parameterized_endpoint_path(input, expected):
             (HTTPMethod.GET, "/v1/posts/100/comments/2"),
             "getPostComment",
         ),
+        (
+            (HTTPMethod.POST, "/v1/posts/{post_id}/comments"),
+            "postPostComments",
+        ),
     ],
 )
 def test_build_operation_id(input, expected):
@@ -95,7 +99,7 @@ def test_build_operation_id(input, expected):
                 "/v1/posts/{post_id}/comments",
                 SchemaType.REQUEST_BODY,
             ),
-            "PostPostCommentRequestBody",
+            "PostPostCommentsRequestBody",
         ),
     ],
 )

@@ -38,9 +38,9 @@ REX_RESPONSE_BODY = re.compile(
 
 class OASSchemaIndexWriter:
     """
-    GetPostCommentRequestParams:
+    GetPostCommentsRequestParams:
       $ref: v1-posts-{post_id}-comments/get/request_params.yml
-    GetPostPhotoResponse:
+    GetPostPhotosResponse:
       $ref: v1-posts-{post_id}-photos/get/responses/200/_index.yml
     PostPostsRequestBody:
       $ref: v1-posts/post/request_body.yml
@@ -85,7 +85,7 @@ class OASSchemaIndexWriter:
                     schema_id = build_schema_identifier(
                         HTTPMethod(method),
                         to_endpoint_path(endpoint_dir),
-                        SchemaType.RESPONSE_BODY,
+                        schema,
                     )
                     yield schema_id, path
                     break

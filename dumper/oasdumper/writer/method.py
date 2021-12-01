@@ -4,6 +4,7 @@ import typing as t
 
 import yaml
 
+from oasdumper.constants import TEMPLATE_OAS_REF
 from oasdumper.models import (
     HTTPMethod,
     OASParameter,
@@ -73,7 +74,9 @@ class OASEndpointMethodWriter:
             oas_json["requestBody"] = {
                 "content": {
                     "application/json": {
-                        "schema": {"$ref": f"#/components/schemas/{schema_id}"}
+                        "schema": {
+                            TEMPLATE_OAS_REF: f"#/components/schemas/{schema_id}"
+                        }
                     }
                 }
             }
@@ -101,7 +104,9 @@ class OASEndpointMethodWriter:
                     "in": "query",
                     "name": schema_id,
                     "required": False,
-                    "schema": {"$ref": f"#/components/schemas/{schema_id}"},
+                    "schema": {
+                        TEMPLATE_OAS_REF: f"#/components/schemas/{schema_id}"
+                    },
                 }
             )
         if params:

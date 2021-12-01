@@ -3,6 +3,7 @@ import typing as t
 
 import yaml
 
+from oasdumper.constants import TEMPLATE_OAS_REF
 from oasdumper.models import HTTPMethod, SchemaType
 from oasdumper.utils import (
     endpoint_dir,
@@ -66,7 +67,9 @@ class OASResponseContentWriter:
             )
             oas_json["content"] = {
                 "application/json": {
-                    "schema": {"$ref": f"#/components/schemas/{schema_id}"}
+                    "schema": {
+                        TEMPLATE_OAS_REF: f"#/components/schemas/{schema_id}"
+                    }
                 }
             }
         return yaml.dump(oas_json)

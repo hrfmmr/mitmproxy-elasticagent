@@ -38,6 +38,7 @@ class OASIndexInfo:
     info: OASSpecInfo
     servers: t.List[OASServer]
     paths: t.Dict[str, t.Any]
+    components: t.Dict[str, t.Any]
 
 
 @dataclass

@@ -6,7 +6,7 @@ import yaml
 
 from oasdumper.models import OASIndexInfo, OASSpecInfo, OASServer
 from oasdumper.types import YAML
-from oasdumper.utils import endpoint_root_dir
+from oasdumper.utils import endpoint_root_dir, schema_root_dir
 
 
 class OASIndexWriter:
@@ -32,7 +32,8 @@ class OASIndexWriter:
         version: str,
         title: str,
         description: str,
-        server_urls: t.List[str],
+        server_urls: t.List[str] = [],
+        components: t.Dict[str, t.Any] = {},
     ) -> None:
         self.dest_root = dest_root
         self.info = OASIndexInfo(
@@ -40,6 +41,7 @@ class OASIndexWriter:
             info=OASSpecInfo(version, title, description),
             servers=[OASServer(url) for url in server_urls],
             paths={"$ref": str(endpoint_root_dir() / "_index.yml")},
+            components=components,
         )
         self.dest = self.dest_root / "index.yml"
 

@@ -7,14 +7,18 @@ import subprocess
 import pytest
 import yaml
 
+from oasdumper.constants import TEMPLATE_OAS_REF, OAS_REF
 from oasdumper.models import HTTPMethod
-
 from oasdumper.writer import (
+    OASRequestParamsSchemaWriter,
+    OASRequestBodySchemaWriter,
+    OASResponseSchemaWriter,
     OASResponseContentWriter,
     OASResponsePatternWriter,
     OASEndpointMethodWriter,
     OASEndpointMethodPatternWriter,
     OASEndpointPatternWriter,
+    OASSchemaIndexWriter,
     OASIndexWriter,
 )
 
@@ -77,6 +81,55 @@ class TestIntegratedWriters:
                         "paths/v1-posts/post/responses/200/_index.yml",
                     ],
                     yaml={
+                        "components": {
+                            "schemas": {
+                                "GetPostCommentsRequestParams": {
+                                    "properties": {"id": {"type": "string"}},
+                                    "type": "object",
+                                },
+                                "GetPostCommentsResponse": {
+                                    "properties": {
+                                        "body": {"type": "string"},
+                                        "email": {"type": "string"},
+                                        "id": {"type": "integer"},
+                                        "name": {"type": "string"},
+                                        "postId": {"type": "integer"},
+                                    },
+                                    "required": [
+                                        "body",
+                                        "email",
+                                        "id",
+                                        "name",
+                                        "postId",
+                                    ],
+                                    "type": "object",
+                                },
+                                "PostPostsRequestBody": {
+                                    "properties": {
+                                        "body": {"type": "string"},
+                                        "title": {"type": "string"},
+                                        "userId": {"type": "integer"},
+                                    },
+                                    "required": ["body", "title", "userId"],
+                                    "type": "object",
+                                },
+                                "PostPostsResponse": {
+                                    "properties": {
+                                        "body": {"type": "string"},
+                                        "id": {"type": "integer"},
+                                        "title": {"type": "string"},
+                                        "userId": {"type": "integer"},
+                                    },
+                                    "required": [
+                                        "body",
+                                        "id",
+                                        "title",
+                                        "userId",
+                                    ],
+                                    "type": "object",
+                                },
+                            }
+                        },
                         "info": {
                             "description": "test description",
                             "title": "test api",
@@ -91,18 +144,7 @@ class TestIntegratedWriters:
                                         "content": {
                                             "application/json": {
                                                 "schema": {
-                                                    "properties": {
-                                                        "body": {
-                                                            "type": "string"
-                                                        },
-                                                        "title": {
-                                                            "type": "string"
-                                                        },
-                                                        "userId": {
-                                                            "type": "integer"
-                                                        },
-                                                    },
-                                                    "type": "object",
+                                                    "$ref": "#/components/schemas/PostPostsRequestBody"
                                                 }
                                             }
                                         }
@@ -112,21 +154,7 @@ class TestIntegratedWriters:
                                             "content": {
                                                 "application/json": {
                                                     "schema": {
-                                                        "properties": {
-                                                            "body": {
-                                                                "type": "string"
-                                                            },
-                                                            "id": {
-                                                                "type": "integer"
-                                                            },
-                                                            "title": {
-                                                                "type": "string"
-                                                            },
-                                                            "userId": {
-                                                                "type": "integer"
-                                                            },
-                                                        },
-                                                        "type": "object",
+                                                        "$ref": "#/components/schemas/PostPostsResponse"
                                                     }
                                                 }
                                             },
@@ -148,9 +176,11 @@ class TestIntegratedWriters:
                                         },
                                         {
                                             "in": "query",
-                                            "name": "id",
+                                            "name": "GetPostCommentsRequestParams",
                                             "required": False,
-                                            "schema": {"type": "string"},
+                                            "schema": {
+                                                "$ref": "#/components/schemas/GetPostCommentsRequestParams"
+                                            },
                                         },
                                     ],
                                     "responses": {
@@ -158,24 +188,7 @@ class TestIntegratedWriters:
                                             "content": {
                                                 "application/json": {
                                                     "schema": {
-                                                        "properties": {
-                                                            "body": {
-                                                                "type": "string"
-                                                            },
-                                                            "email": {
-                                                                "type": "string"
-                                                            },
-                                                            "id": {
-                                                                "type": "integer"
-                                                            },
-                                                            "name": {
-                                                                "type": "string"
-                                                            },
-                                                            "postId": {
-                                                                "type": "integer"
-                                                            },
-                                                        },
-                                                        "type": "object",
+                                                        "$ref": "#/components/schemas/GetPostCommentsResponse"
                                                     }
                                                 }
                                             },
@@ -195,17 +208,26 @@ class TestIntegratedWriters:
     def test_write(self, spec, inputs, expected, tmpdir):
         #  dest_root = pathlib.Path(tmpdir)
         # debug
-        dest_root = pathlib.Path(".tmp")
+        dest_root = pathlib.Path(".test")
 
         if dest_root.exists():
             from shutil import rmtree
 
-            rmtree(".tmp")
+            rmtree(".test")
         else:
             dest_root.mkdir()
         # debug
 
         for input in inputs:
+            endpoint_path = input["endpoint_path"]
+            method = HTTPMethod[input["_source"]["request"]["method"]]
+            query = json.loads(input["_source"]["request"]["query"])
+            request_content_raw = input["_source"]["request"]["content"]
+            request_content = (
+                json.loads(request_content_raw)
+                if request_content_raw
+                else None
+            )
             response_content_raw = input["_source"]["response"]["content"]
             try:
                 response_content = (
@@ -215,52 +237,79 @@ class TestIntegratedWriters:
                 )
             except json.decoder.JSONDecodeError:
                 response_content = None
+            status_code = input["_source"]["response"]["status_code"]
+
+            if query:
+                writer = OASRequestParamsSchemaWriter(
+                    dest_root,
+                    endpoint_path,
+                    method,
+                    query=query,
+                )
+                writer.write()
+
+            if request_content:
+                writer = OASRequestBodySchemaWriter(
+                    dest_root,
+                    endpoint_path,
+                    method,
+                    request_content=request_content,
+                )
+                writer.write()
+
+            writer = OASResponseSchemaWriter(
+                dest_root,
+                endpoint_path,
+                method,
+                status_code,
+                response_content,
+            )
+            writer.write()
+
             writer = OASResponseContentWriter(
                 dest_root,
-                input["endpoint_path"],
-                HTTPMethod[input["_source"]["request"]["method"]],
-                input["_source"]["response"]["status_code"],
+                endpoint_path,
+                method,
+                status_code,
                 response_content,
             )
             writer.write()
 
             writer = OASResponsePatternWriter(
                 dest_root,
-                input["endpoint_path"],
-                HTTPMethod[input["_source"]["request"]["method"]],
+                endpoint_path,
+                method,
             )
             writer.write()
 
-            request_content_raw = input["_source"]["request"]["content"]
-            request_content = (
-                json.loads(request_content_raw)
-                if request_content_raw
-                else None
-            )
             writer = OASEndpointMethodWriter(
                 dest_root,
-                input["endpoint_path"],
-                HTTPMethod[input["_source"]["request"]["method"]],
-                query=json.loads(input["_source"]["request"]["query"]),
+                endpoint_path,
+                method,
+                query=query,
                 request_content=request_content,
             )
             writer.write()
 
-            writer = OASEndpointMethodPatternWriter(
-                dest_root, input["endpoint_path"]
-            )
+            writer = OASEndpointMethodPatternWriter(dest_root, endpoint_path)
             writer.write()
 
         writer = OASEndpointPatternWriter(dest_root)
         writer.write()
 
+        schema_index_writer = OASSchemaIndexWriter(dest_root)
+        schema_index_writer.write()
+
         writer = OASIndexWriter(
             dest_root,
-            spec["openapi_version"],
-            spec["version"],
-            spec["title"],
-            spec["description"],
-            spec["server_urls"],
+            openapi_version=spec["openapi_version"],
+            version=spec["version"],
+            title=spec["title"],
+            description=spec["description"],
+            server_urls=spec["server_urls"],
+            components={
+                "schemas": yaml.safe_load(schema_index_writer.dest.read_text())
+            },
         )
         writer.write()
 
@@ -274,7 +323,7 @@ class TestIntegratedWriters:
         ):
             assert str(path) == str(dest_root / exp_path)
 
-        bundle_dest_path = pathlib.Path(".build/oas.yml")
+        bundle_dest_path = pathlib.Path(".test/bundle.yml")
         subprocess.run(
             [
                 "./node_modules/.bin/swagger-cli",
@@ -287,6 +336,9 @@ class TestIntegratedWriters:
             ],
             check=True,
         )
+        raw_oas_yaml = bundle_dest_path.read_text()
+        ref_enabled = raw_oas_yaml.replace(TEMPLATE_OAS_REF, OAS_REF)
+        bundle_dest_path.write_text(ref_enabled)
         subprocess.run(
             [
                 "./node_modules/.bin/spectral",

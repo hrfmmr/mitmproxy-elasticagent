@@ -52,17 +52,17 @@ class TestOASSchemaIndexWriter:
                 dict(
                     path="components/schemas/_index.yml",
                     yaml={
-                        "GetPostCommentResponse": {
+                        "GetPostCommentsRequestParams": {
                             "properties": {"name": {"type": "string"}},
                             "required": ["name"],
                             "type": "object",
                         },
-                        "GetPostPhotoResponse": {
+                        "GetPostPhotosResponse": {
                             "properties": {"name": {"type": "string"}},
                             "required": ["name"],
                             "type": "object",
                         },
-                        "PostPostsResponse": {
+                        "PostPostsRequestBody": {
                             "properties": {"name": {"type": "string"}},
                             "required": ["name"],
                             "type": "object",
@@ -84,3 +84,5 @@ class TestOASSchemaIndexWriter:
         logger.debug(pprint.pformat(list(dest_root.glob("**/*")), indent=2))
         logger.debug(f"📜yaml:\n{writer.dest.read_text()}")
         logger.debug(yaml.safe_load(writer.dest.read_text()))
+        assert str(writer.dest) == str(dest_root / expected["path"])
+        assert yaml.safe_load(writer.dest.read_text()) == expected["yaml"]

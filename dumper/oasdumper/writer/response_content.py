@@ -61,7 +61,10 @@ class OASResponseContentWriter:
         oas_json = {
             "description": description,
         }
-        if self.response_content:
+        if self.response_content and (
+            type(self.response_content) is dict
+            or type(self.response_content) is list
+        ):
             schema_id = build_schema_identifier(
                 self.method, self.endpoint_path, SchemaType.RESPONSE_BODY
             )

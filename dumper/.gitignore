@@ -1,3 +1,6 @@
 **/*.pyc
 /.venv/
 /node_modules/
+/.tmp/
+/.build/
+/.test/

@@ -19,7 +19,7 @@ class OASResponseSchemaWriter:
         endpoint_path: str,
         method: HTTPMethod,
         status_code: int,
-        response_content: t.Optional[t.Dict[str, t.Any]],
+        response_content: t.Dict[str, t.Any],
     ) -> None:
         self.dest_root = dest_root
         self.endpoint_path = endpoint_path

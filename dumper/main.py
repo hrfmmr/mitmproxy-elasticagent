@@ -3,35 +3,80 @@ import logging
 import subprocess
 import os
 import pathlib
+import typing as t
 from collections import defaultdict
 from urllib.parse import urlparse, parse_qs
 
+import yaml
 from elasticsearch import Elasticsearch
 
+from oasdumper.constants import TEMPLATE_OAS_REF, OAS_REF
 from oasdumper.logging import setup_logger
 from oasdumper.models import HTTPMethod
 from oasdumper.writer import (
+    OASRequestParamsSchemaWriter,
+    OASRequestBodySchemaWriter,
+    OASResponseSchemaWriter,
     OASResponseContentWriter,
     OASResponsePatternWriter,
     OASEndpointMethodWriter,
     OASEndpointMethodPatternWriter,
     OASEndpointPatternWriter,
+    OASSchemaIndexWriter,
     OASIndexWriter,
 )
 from oasdumper.utils import parameterized_endpoint_path
 
+ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOST", "http://localhost:9200")
 ELASTICSEARCH_INDEX = os.environ["ELASTICSEARCH_INDEX"]
-OAS_TMP_DEST = ".tmp"
-OAS_BUNDLED_YAML = ".bundle/oas.yml"
-OAS_BUNDLED_HTML = ".bundle/index.html"
+DEST_DIR = pathlib.Path(".build")
+OAS_YAML_DEST = DEST_DIR / "bundle.yml"
+OAS_HTML_DEST = DEST_DIR / "index.html"
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
+
+
+def write_schemas(
+    dest_root: pathlib.Path,
+    endpoint_path: str,
+    method: HTTPMethod,
+    query: t.Optional[t.Dict[str, t.Any]],
+    request_content: t.Optional[t.Dict[str, t.Any]],
+    status_code: int,
+    response_content: t.Optional[t.Dict[str, t.Any]],
+):
+    if query:
+        OASRequestParamsSchemaWriter(
+            dest_root,
+            endpoint_path,
+            method,
+            query=query,
+        ).write()
+
+    if request_content:
+        OASRequestBodySchemaWriter(
+            dest_root,
+            endpoint_path,
+            method,
+            request_content=request_content,
+        ).write()
+
+    if response_content and (
+        type(response_content) is dict or type(response_content) is list
+    ):
+        OASResponseSchemaWriter(
+            dest_root,
+            endpoint_path,
+            method,
+            status_code,
+            response_content,
+        ).write()
 
 
 def main():
     setup_logger()
-    es = Elasticsearch("http://localhost:9200")
+    es = Elasticsearch(ELASTICSEARCH_HOST)
 
     result = es.search(
         index=ELASTICSEARCH_INDEX,
@@ -48,13 +93,12 @@ def main():
     for bucket in result["aggregations"]["requestpaths"]["buckets"]:
         path = bucket["key"]
         parsed = urlparse(path)
-        logger.debug(f"parsed:{parsed}")
         parameterized_path = parameterized_endpoint_path(parsed.path)
         path_query_map[parameterized_path].append(parse_qs(parsed.query))
-    dest_root = pathlib.Path(OAS_TMP_DEST)
+    dest_root = pathlib.Path(DEST_DIR)
     pattern_set = set()
     for path in list(path_query_map.keys()):
-        logger.debug(f"path:{path}")
+        logger.info(f"🐛path:{path}")
         result = es.search(
             index=ELASTICSEARCH_INDEX,
             query=dict(term={"request.path.keyword": path}),
@@ -68,23 +112,18 @@ def main():
         )
         if not (result["hits"] and result["hits"]["hits"]):
             continue
-        logger.debug(
-            json.dumps(result["hits"]["hits"], indent=2, ensure_ascii=False)
-        )
         hits = result["hits"]["hits"]
         for hit in hits:
             info = hit["_source"]
-            pattern = (
-                path,
-                info["request"]["method"],
-                info["response"]["status_code"],
+            method = HTTPMethod[info["request"]["method"]]
+            query = json.loads(info["request"]["query"])
+            request_content_raw = info["request"]["content"]
+            status_code = info["response"]["status_code"]
+            request_content = (
+                json.loads(request_content_raw)
+                if request_content_raw
+                else None
             )
-            if pattern in pattern_set:
-                continue
-            logger.debug(json.dumps(info, indent=2, ensure_ascii=False))
-
-            pattern_set.add(pattern)
-
             response_content_raw = info["response"]["content"]
             try:
                 response_content = (
@@ -94,69 +133,87 @@ def main():
                 )
             except json.decoder.JSONDecodeError:
                 response_content = None
-            writer = OASResponseContentWriter(
+
+            pattern = (
+                path,
+                method.value,
+                status_code,
+            )
+            if pattern in pattern_set:
+                continue
+
+            pattern_set.add(pattern)
+
+            write_schemas(
                 dest_root,
                 path,
-                HTTPMethod[info["request"]["method"]],
-                info["response"]["status_code"],
+                method,
+                query,
+                request_content,
+                status_code,
                 response_content,
             )
-            writer.write()
 
-            writer = OASResponsePatternWriter(
+            OASResponseContentWriter(
                 dest_root,
                 path,
-                HTTPMethod[info["request"]["method"]],
-            )
-            writer.write()
+                method,
+                status_code,
+                response_content,
+            ).write()
 
-            request_content_raw = info["request"]["content"]
-            request_content = (
-                json.loads(request_content_raw)
-                if request_content_raw
-                else None
-            )
-            writer = OASEndpointMethodWriter(
+            OASResponsePatternWriter(
                 dest_root,
                 path,
-                HTTPMethod[info["request"]["method"]],
-                query=json.loads(info["request"]["query"]),
+                method,
+            ).write()
+
+            OASEndpointMethodWriter(
+                dest_root,
+                path,
+                method,
+                query=query,
                 request_content=request_content,
-            )
-            writer.write()
-        writer = OASEndpointMethodPatternWriter(dest_root, path)
-        writer.write()
-    writer = OASEndpointPatternWriter(dest_root)
-    writer.write()
+            ).write()
+        OASEndpointMethodPatternWriter(dest_root, path).write()
+    OASEndpointPatternWriter(dest_root).write()
 
-    writer = OASIndexWriter(
+    schema_index_writer = OASSchemaIndexWriter(dest_root)
+    schema_index_writer.write()
+
+    index_writer = OASIndexWriter(
         dest_root,
         openapi_version="3.0.0",
         version="0.0.1",
         title="test api",
         description="test description",
         server_urls=["https://example.com"],
+        components={
+            "schemas": yaml.safe_load(schema_index_writer.dest.read_text())
+        },
     )
-    writer.write()
+    index_writer.write()
 
-    bundle_dest_path = pathlib.Path(OAS_BUNDLED_YAML)
     subprocess.run(
         [
             "./node_modules/.bin/swagger-cli",
             "bundle",
-            str(writer.dest),
+            str(index_writer.dest),
             "--outfile",
-            str(bundle_dest_path),
+            str(OAS_YAML_DEST),
             "--type",
             "yaml",
         ],
         check=True,
     )
+    raw_oas_yaml = OAS_YAML_DEST.read_text()
+    ref_enabled = raw_oas_yaml.replace(TEMPLATE_OAS_REF, OAS_REF)
+    OAS_YAML_DEST.write_text(ref_enabled)
     subprocess.run(
         [
             "./node_modules/.bin/spectral",
             "lint",
-            str(bundle_dest_path),
+            str(OAS_YAML_DEST),
         ],
         check=True,
     )
@@ -164,14 +221,14 @@ def main():
         [
             "node_modules/.bin/redoc-cli",
             "bundle",
-            str(bundle_dest_path),
+            str(OAS_YAML_DEST),
             "--output",
-            OAS_BUNDLED_HTML,
+            OAS_HTML_DEST,
             "--options.onlyRequiredInSamples",
         ],
         check=True,
     )
-    print(f"👉Check the output:{pathlib.Path(OAS_BUNDLED_HTML).resolve()}")
+    print(f"👉Check the output:{pathlib.Path(OAS_HTML_DEST).resolve()}")
     print("✨Done")
 
 

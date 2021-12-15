@@ -83,32 +83,33 @@ class OASEndpointMethodWriter:
         params = []
         path_params = build_path_params(self.endpoint_path)
         if path_params:
-            models = [
-                OASParameter(
-                    _in="path",
-                    name=k,
-                    required=True,
-                    schema=OASParameterSchema(
-                        type=OASParser.gettype(type(v).__name__)
-                    ),
-                )
-                for k, v in path_params.items()
-            ]
-            params.extend([p.build_oas_json() for p in models])
-        if self.query:
-            schema_id = build_schema_identifier(
-                self.method, self.endpoint_path, SchemaType.REQUEST_PARAMS
+            params.extend(
+                [
+                    OASParameter(
+                        _in="path",
+                        name=k,
+                        required=True,
+                        schema=OASParameterSchema(
+                            type=OASParser.gettype(type(v).__name__)
+                        ),
+                    )
+                    for k, v in path_params.items()
+                ]
             )
-            params.append(
-                {
-                    "in": "query",
-                    "name": schema_id,
-                    "required": False,
-                    "schema": {
-                        TEMPLATE_OAS_REF: f"#/components/schemas/{schema_id}"
-                    },
-                }
+        if self.query:
+            params.extend(
+                [
+                    OASParameter(
+                        _in="query",
+                        name=k,
+                        required=False,
+                        schema=OASParameterSchema(
+                            type=OASParser.gettype(type(v).__name__)
+                        ),
+                    )
+                    for k, v in self.query.items()
+                ]
             )
         if params:
-            oas_json["parameters"] = params
+            oas_json["parameters"] = [p.build_oas_json() for p in params]
         return yaml.dump(oas_json)

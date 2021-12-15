@@ -45,11 +45,9 @@ class TestOASEndpointMethodWriter:
                             },
                             {
                                 "in": "query",
-                                "name": "GetPostCommentsRequestParams",
+                                "name": "id",
                                 "required": False,
-                                "schema": {
-                                    "$ref": "#/components/schemas/GetPostCommentsRequestParams"
-                                },
+                                "schema": {"type": "string"},
                             },
                         ],
                         "responses": {"$ref": "responses/_index.yml"},
@@ -80,7 +78,7 @@ class TestOASEndpointMethodWriter:
                             "content": {
                                 "application/json": {
                                     "schema": {
-                                        "$ref": "#/components/schemas/PostPostsRequestBody"
+                                        "$$ref": "#/components/schemas/PostPostsRequestBody"
                                     }
                                 }
                             }
@@ -113,7 +111,7 @@ class TestOASEndpointMethodWriter:
                             "content": {
                                 "application/json": {
                                     "schema": {
-                                        "$ref": "#/components/schemas/PostFooBarBazRequestBody"
+                                        "$$ref": "#/components/schemas/PostFooBarBazRequestBody"
                                     }
                                 }
                             }

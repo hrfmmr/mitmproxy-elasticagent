@@ -10,7 +10,6 @@ import yaml
 from oasdumper.constants import TEMPLATE_OAS_REF, OAS_REF
 from oasdumper.models import HTTPMethod
 from oasdumper.writer import (
-    OASRequestParamsSchemaWriter,
     OASRequestBodySchemaWriter,
     OASResponseSchemaWriter,
     OASResponseContentWriter,
@@ -83,10 +82,6 @@ class TestIntegratedWriters:
                     yaml={
                         "components": {
                             "schemas": {
-                                "GetPostCommentsRequestParams": {
-                                    "properties": {"id": {"type": "string"}},
-                                    "type": "object",
-                                },
                                 "GetPostCommentsResponse": {
                                     "properties": {
                                         "body": {"type": "string"},
@@ -176,11 +171,9 @@ class TestIntegratedWriters:
                                         },
                                         {
                                             "in": "query",
-                                            "name": "GetPostCommentsRequestParams",
+                                            "name": "id",
                                             "required": False,
-                                            "schema": {
-                                                "$ref": "#/components/schemas/GetPostCommentsRequestParams"
-                                            },
+                                            "schema": {"type": "string"},
                                         },
                                     ],
                                     "responses": {
@@ -238,15 +231,6 @@ class TestIntegratedWriters:
             except json.decoder.JSONDecodeError:
                 response_content = None
             status_code = input["_source"]["response"]["status_code"]
-
-            if query:
-                writer = OASRequestParamsSchemaWriter(
-                    dest_root,
-                    endpoint_path,
-                    method,
-                    query=query,
-                )
-                writer.write()
 
             if request_content:
                 writer = OASRequestBodySchemaWriter(

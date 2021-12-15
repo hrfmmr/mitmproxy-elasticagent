@@ -14,7 +14,6 @@ from oasdumper.constants import TEMPLATE_OAS_REF, OAS_REF
 from oasdumper.logging import setup_logger
 from oasdumper.models import HTTPMethod
 from oasdumper.writer import (
-    OASRequestParamsSchemaWriter,
     OASRequestBodySchemaWriter,
     OASResponseSchemaWriter,
     OASResponseContentWriter,
@@ -46,14 +45,6 @@ def write_schemas(
     status_code: int,
     response_content: t.Optional[t.Dict[str, t.Any]],
 ):
-    if query:
-        OASRequestParamsSchemaWriter(
-            dest_root,
-            endpoint_path,
-            method,
-            query=query,
-        ).write()
-
     if request_content:
         OASRequestBodySchemaWriter(
             dest_root,

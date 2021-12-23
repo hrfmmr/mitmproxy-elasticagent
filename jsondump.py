@@ -18,6 +18,7 @@ from typing import Optional, Any, Dict, List, Union
 from urllib.parse import urlparse
 
 import aiohttp
+import brotli
 from mitmproxy import ctx
 
 JSON = Any
@@ -152,9 +153,16 @@ class Decoding:
                 return ""
             return str(gzip.decompress(content), "utf-8")
 
+        @staticmethod
+        def decode_brotli(content: bytes) -> str:
+            if not content:
+                return ""
+            return str(brotli.decompress(content), "utf-8")
+
     decoding_maps = {
         "none": __Methods.identity,
         "gzip": __Methods.decode_gzip,
+        "br": __Methods.decode_brotli,
     }
 
     @classmethod

@@ -7,7 +7,7 @@ A [mitmproxy](https://mitmproxy.org/)'s addon for dumping json response to Elast
 
 ```bash
 # install additional dependencies
-$ $(brew --prefix mitmproxy)/libexec/bin/pip install aiohttp
+$ $(brew --prefix mitmproxy)/libexec/bin/pip install aiohttp brotli
 
 # or if you installed mitmproxy with pipx
 $ pipx inject mitmproxy aiohttp

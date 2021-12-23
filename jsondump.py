@@ -1,3 +1,14 @@
+"""
+Configuration:
+
+    cat > ~/.mitmproxy/config.yaml <<EOF
+    # Dump target Elasticsearch url
+    es_dest_url: "https://elastic.search.local/my-index/my-type"
+    # Target host for dumping
+    es_target_host: api.example.com
+
+    EOF
+"""
 import asyncio
 import gzip
 import json
@@ -10,12 +21,6 @@ import aiohttp
 from mitmproxy import ctx
 
 JSON = Any
-
-# TODO: make configurable
-elasticsearch_url = "http://127.0.0.1:9200/apptraffic/_doc"
-dump_target_hosts = [
-    "jsonplaceholder.typicode.com",
-]
 
 
 class ElasticAgentAddon:
@@ -37,14 +42,22 @@ class ElasticAgentAddon:
         ),
     }
 
-    def __init__(self, url: str, hosts: List[str]):
-        self.url: str = elasticsearch_url
-        self.hosts: List[str] = hosts
+    def __init__(self):
+        self.url: Optional[str] = None
+        self.host: Optional[str] = None
         self.content_encoding: Optional[str] = None
         self.transformations: Optional[List[Dict[str, Any]]] = None
         self.worker_pool: Optional[ElasticAgentWorkerPool] = None
 
+    def load(self, loader):
+        loader.add_option(
+            "es_dest_url", str, "", "Target Elasticsearch url for dumping"
+        )
+        loader.add_option("es_target_host", str, "", "Target host for dumping")
+
     def configure(self, _):
+        self.url = ctx.options.es_dest_url
+        self.host = ctx.options.es_target_host
         self._init_transformations()
         self.worker_pool = ElasticAgentWorkerPool(self.url)
         self.worker_pool.start()
@@ -53,7 +66,7 @@ class ElasticAgentAddon:
         """
         Dump request/response pairs.
         """
-        if flow.request.host not in self.hosts:
+        if flow.request.host != self.host:
             return
         path = urlparse(flow.request.path).path
         query = json.dumps({k: v for k, v in flow.request.query.fields})
@@ -179,9 +192,7 @@ class ElasticAgentWorkerPool(Thread):
 
     async def _run_loop(self):
         self.queue = asyncio.Queue()
-        await asyncio.gather(
-            *(self.post_worker(i) for i in range(self.num_workers))
-        )
+        await asyncio.gather(*(self.post_worker(i) for i in range(self.num_workers)))
 
     async def post_worker(self, id: int):
         while True:
@@ -194,4 +205,4 @@ class ElasticAgentWorkerPool(Thread):
                     ctx.log.info(await resp.text())
 
 
-addons = [ElasticAgentAddon(url=elasticsearch_url, hosts=dump_target_hosts)]
+addons = [ElasticAgentAddon()]

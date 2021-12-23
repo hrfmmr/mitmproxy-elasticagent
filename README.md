@@ -19,6 +19,10 @@ $ pipx inject mitmproxy aiohttp
     ```yaml
     scripts:
       - /path/to/mitmproxy-elasticagent/jsondump.py
+    # Dump target Elasticsearch url
+    es_dest_url: "https://elastic.search.local/my-index/my-type"
+    # Target host for dumping
+    es_target_host: api.example.com
     ```
 
 ### Run mitmproxy
